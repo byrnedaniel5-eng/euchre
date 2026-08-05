@@ -38,11 +38,13 @@ class Client {
     this.moves = 0;
   }
 
-  connect(room) {
+  connect(room, players) {
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(URL);
       this.ws.on('open', () => {
-        this.ws.send(JSON.stringify({ type: 'join', playerId: this.playerId, name: this.name, room }));
+        this.ws.send(JSON.stringify({
+          type: 'join', playerId: this.playerId, name: this.name, room, players,
+        }));
       });
       this.ws.on('message', (raw) => {
         const msg = JSON.parse(raw);
@@ -249,7 +251,7 @@ try {
   const rando = new Client('Nope', 'pid-rando');
   await rando.connect(dan.room).catch(() => {});
   await sleep(150);
-  assert(rando.errors.some((e) => /two players/i.test(e)), 'third joiner is turned away');
+  assert(rando.errors.some((e) => /full/i.test(e)), 'third joiner is turned away');
 
   console.log('\n10. finish the resumed game');
   danAgain.autoPlay = true;
@@ -286,6 +288,45 @@ try {
     danAgain.close(), gf.close(), newcomer.close(),
     rando.close().catch(() => {}), ghost.close().catch(() => {}),
   ]);
+
+  console.log('\n13. every table size plays a full game');
+  for (const n of [1, 2, 3, 4]) {
+    const seats = [];
+    for (let i = 0; i < n; i++) {
+      const c = new Client(`P${i}`, `pid-t${n}-${i}`);
+      await c.connect(i === 0 ? null : seats[0].room, i === 0 ? n : undefined);
+      seats.push(c);
+    }
+    await waitFor(() => seats[0].state && seats[0].state.phase !== 'lobby',
+      `${n}-player game to start`);
+
+    assert(seats[0].state.humans === n, `${n} player(s): server reports ${n} human seats`);
+    assert(seats.every((p) => p.state.you.hand.length === 5),
+      `${n} player(s): everyone is dealt five cards`);
+    assert(seats.every((p, i) => p.seat === i),
+      `${n} player(s): people fill seats in join order`);
+    const bots = seats[0].state.names.slice(n);
+    assert(bots.length === 4 - n,
+      `${n} player(s): ${4 - n} bot(s) fill the rest (${bots.join(', ') || 'none'})`);
+
+    const extra = new Client('Extra', `pid-x${n}`);
+    let joinErr = null;
+    await extra.connect(seats[0].room).catch((e) => { joinErr = e.message; });
+    await sleep(150);
+    assert(/full/i.test(joinErr || extra.errors.join(' ')),
+      `${n} player(s): an extra person is turned away`);
+
+    seats.forEach((p) => { p.autoPlay = true; p.think(); });
+    await waitFor(() => seats[0].state.phase === 'gameOver',
+      `${n}-player game to finish`, 120000);
+    assert(Math.max(...seats[0].state.score) >= 10,
+      `${n} player(s): played to ten (${seats[0].state.score.join('–')})`);
+    assert(seats.every((p) => p.errors.length === 0),
+      `${n} player(s): no rule errors`);
+
+    await Promise.all(seats.map((p) => p.close()));
+    await extra.close().catch(() => {});
+  }
 } catch (err) {
   failures++;
   console.error('\nFAIL:', err.message);

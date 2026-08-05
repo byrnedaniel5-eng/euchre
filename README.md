@@ -1,8 +1,18 @@
 # Euchre
 
-Two people, two bot partners, ten points. Both humans play from their own
-phones; each is partnered with a bot, so you and your opponent are always on
-opposite teams.
+Euchre for one to four people on their own phones, with bots filling whatever
+seats are left. First team to ten.
+
+Pick how many people are playing when you create the game; everyone else joins
+with a four-letter code. People take seats in join order and bots take the
+rest, so the table works out as:
+
+| People | Seats | Result |
+|---|---|---|
+| 1 | 0 | You, a bot partner, two bot opponents |
+| 2 | 0, 1 | Two people on **opposite** teams, each with a bot partner |
+| 3 | 0, 1, 2 | Seats 0 and 2 partner each other; the bot partners seat 1 |
+| 4 | 0–3 | Four people, no bots |
 
 ```
         Robo (bot)          <- your partner
@@ -10,8 +20,7 @@ opposite teams.
         You
 ```
 
-Seats 0 and 2 are one team, seats 1 and 3 the other. You take seat 0, whoever
-joins your room takes seat 1.
+Seats 0 and 2 are one team, seats 1 and 3 the other.
 
 ## Running it locally
 
@@ -20,9 +29,10 @@ npm install
 npm start          # http://localhost:3000
 ```
 
-Open it, enter a name, hit **Start a new game**, and send the other person the
-four-letter code (the **Copy invite link** button uses the phone share sheet if
-there is one).
+Open it, enter a name, choose how many people are playing, and hit **Start a
+new game**. Send everyone else the four-letter code (the **Copy invite link**
+button uses the phone share sheet if there is one). The game deals as soon as
+every human seat is filled — a one-player game skips the lobby entirely.
 
 ## Putting it online
 
@@ -107,7 +117,12 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
   errors or horizontal overflow.
 - `server/leavecheck.js` — drives a browser through leaving a room from the
   lobby and from mid-hand, and asserts a refresh afterwards stays out. Rejoining
-  is deliberately sticky, so the way out needs its own test.
+  is deliberately sticky, so the way out needs its own test. Also covers the
+  player-count picker and that a solo game skips the lobby.
+
+  The end-to-end suite plays a **complete game at all four table sizes**, which
+  is what catches the awkward cases — a lone human who is also the dealer, and
+  a four-person table where nothing is ever waiting on a bot.
 - `server/cardshots.js` — renders the sample hand in all six card-style and
   suit-colour combinations, at both in-hand and on-table size, screenshots
   each, and asserts the styles are actually distinct and that four-colour mode

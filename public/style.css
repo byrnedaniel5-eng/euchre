@@ -637,6 +637,17 @@ button.leave {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
+.seg.spread { width: 100%; gap: 6px; }
+.seg.spread button { flex: 1; padding: 12px 0; font-size: 17px; }
+
+.hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  min-height: 18px;
+}
+
 .seg button.on {
   background: rgba(86, 189, 138, 0.3);
   border-color: var(--accent);

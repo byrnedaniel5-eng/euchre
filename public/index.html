@@ -16,10 +16,19 @@
 <section id="join" class="screen">
   <div class="join-card">
     <h1>Euchre</h1>
-    <p class="tagline">Two of you, two bots, ten points.</p>
+    <p class="tagline">One to four of you, bots for the rest, ten points.</p>
 
     <label for="name">Your name</label>
     <input id="name" maxlength="14" autocomplete="nickname" placeholder="Dan">
+
+    <label>How many people are playing?</label>
+    <div class="seg spread" id="opt-players">
+      <button data-v="1">1</button>
+      <button data-v="2">2</button>
+      <button data-v="3">3</button>
+      <button data-v="4">4</button>
+    </div>
+    <p class="hint" id="players-hint"></p>
 
     <button id="create" class="primary">Start a new game</button>
 

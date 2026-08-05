@@ -151,6 +151,41 @@ try {
   check(cleared === 'null' || cleared === null, 'the dead room is forgotten, so refreshing is clean');
 
   p2.close();
+
+  console.log('\n6. picking the number of people');
+  await go(`http://127.0.0.1:${PORT}/`);
+  for (const n of [1, 2, 3, 4]) {
+    await evaluate(`document.querySelector('#opt-players button[data-v="${n}"]').click(); true`);
+    const on = await evaluate(
+      `document.querySelector('#opt-players button.on').dataset.v`);
+    const hint = await evaluate(`document.getElementById('players-hint').textContent`);
+    check(on === String(n) && hint.length > 0, `${n} selected — "${hint}"`);
+  }
+
+  console.log('\n7. a solo game starts with no lobby at all');
+  await evaluate(`document.querySelector('#opt-players button[data-v="1"]').click();
+                  document.getElementById('name').value = 'Dan';
+                  document.getElementById('create').click(); true`);
+  check(await until(onGame), 'one player goes straight to the table, skipping the lobby');
+  check(!(await evaluate(onLobby)), 'no waiting screen for a solo game');
+  const seatNames = await evaluate(
+    `[...document.querySelectorAll('.seat .tag')].map(t => t.textContent).join(' | ')`);
+  check(await until(`document.querySelectorAll('#hand .card').length === 5`),
+    `dealt in against three bots (${seatNames})`);
+  await evaluate(`window.confirm = () => true;
+                  document.getElementById('menu-btn').click(); true`);
+  await sleep(200);
+  const conn = await evaluate(`document.getElementById('drawer-conn').textContent`);
+  check(/solo/i.test(conn), `the menu says it is a solo game ("${conn}")`);
+
+  console.log('\n8. a three-person table waits for two more');
+  await evaluate(`document.getElementById('leave-game').click(); true`);
+  await until(onJoinScreen);
+  await evaluate(`document.querySelector('#opt-players button[data-v="3"]').click();
+                  document.getElementById('create').click(); true`);
+  check(await until(onLobby), 'three-player table shows the lobby');
+  const heading = await evaluate(`document.querySelector('#lobby h2').textContent`);
+  check(/2 more/.test(heading), `it asks for the right number ("${heading}")`);
 } catch (err) {
   failures++;
   console.error('\nFAIL:', err.message);

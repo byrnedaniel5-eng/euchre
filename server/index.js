@@ -18,9 +18,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = process.env.PORT || 3000;
 
-const BOT_NAMES = ['Robo', 'Chip']; // seat 2 partners seat 0; seat 3 partners seat 1
-const HUMAN_SEATS = [0, 1];
-const isBotSeat = (seat) => seat === 2 || seat === 3;
+// Seats 0..3 fill with people in join order; whatever is left over is a bot.
+// So 2 people sit at 0 and 1 — opposite teams — and the bots partner them.
+const BOT_POOL = ['Robo', 'Chip', 'Nova', 'Pip'];
+const MAX_SEATS = 4;
+const DEFAULT_HUMANS = 2;
+
+const humanSeats = (room) => Array.from({ length: room.humanCount }, (_, i) => i);
+const isBotSeat = (room, seat) => seat >= room.humanCount;
 
 // Timings, in ms. EUCHRE_FAST collapses them for the end-to-end test.
 const FAST = process.env.EUCHRE_FAST === '1';
@@ -47,12 +52,14 @@ function newRoomCode() {
   return code;
 }
 
-function createRoom() {
+function createRoom(humanCount = DEFAULT_HUMANS) {
   const code = newRoomCode();
   const room = {
     code,
-    // seats[0] and seats[1] are the humans: {playerId, name, sockets:Set}
-    seats: [null, null],
+    // How many of the four seats are people. The rest are bots.
+    humanCount: Math.min(MAX_SEATS, Math.max(1, humanCount | 0)),
+    // One entry per seat; only the human ones are ever filled.
+    seats: [null, null, null, null],
     game: null,
     timer: null,
     chat: [],
@@ -66,16 +73,17 @@ function createRoom() {
 }
 
 function seatNames(room) {
-  return [
-    room.seats[0]?.name || 'Player 1',
-    room.seats[1]?.name || 'Player 2',
-    BOT_NAMES[0],
-    BOT_NAMES[1],
-  ];
+  const names = [];
+  let bot = 0;
+  for (let s = 0; s < MAX_SEATS; s++) {
+    if (s < room.humanCount) names.push(room.seats[s]?.name || `Player ${s + 1}`);
+    else names.push(BOT_POOL[bot++]);
+  }
+  return names;
 }
 
-function bothSeated(room) {
-  return !!(room.seats[0] && room.seats[1]);
+function allSeated(room) {
+  return humanSeats(room).every((s) => room.seats[s]);
 }
 
 function startGame(room) {
@@ -96,22 +104,24 @@ function lobbyState(room) {
   return {
     phase: 'lobby',
     room: room.code,
+    humans: room.humanCount,
     names: seatNames(room),
-    seated: [!!room.seats[0], !!room.seats[1]],
+    seated: humanSeats(room).map((s) => !!room.seats[s]),
   };
 }
 
 function broadcast(room) {
   room.lastActivity = Date.now();
-  for (const seat of HUMAN_SEATS) {
+  for (const seat of humanSeats(room)) {
     const p = room.seats[seat];
     if (!p) continue;
     const state = room.game
       ? {
           ...room.game.viewFor(seat),
           room: room.code,
+          humans: room.humanCount,
           connected: connectionFlags(room),
-          ready: HUMAN_SEATS.filter((s) => room.ready.has(s)),
+          ready: humanSeats(room).filter((s) => room.ready.has(s)),
         }
       : lobbyState(room);
     for (const ws of p.sockets) send(ws, { type: 'state', state });
@@ -119,13 +129,13 @@ function broadcast(room) {
 }
 
 function connectionFlags(room) {
-  return HUMAN_SEATS.map((s) => !!(room.seats[s] && room.seats[s].sockets.size > 0));
+  return humanSeats(room).map((s) => !!(room.seats[s] && room.seats[s].sockets.size > 0));
 }
 
 function broadcastChat(room, entry) {
   room.chat.push(entry);
   if (room.chat.length > 50) room.chat.shift();
-  for (const seat of HUMAN_SEATS) {
+  for (const seat of humanSeats(room)) {
     for (const ws of room.seats[seat]?.sockets || []) send(ws, { type: 'chat', entry });
   }
 }
@@ -165,14 +175,14 @@ function advance(room) {
 
   // A dealer who is sitting out a loner still picks up and discards, but the
   // hand is dead — don't make a human click through a meaningless choice.
-  if (g.phase === 'discard' && g.dealer === g.sittingOut && !isBotSeat(g.dealer)) {
+  if (g.phase === 'discard' && g.dealer === g.sittingOut && !isBotSeat(room, g.dealer)) {
     return schedule(room, 400, () => {
       g.discard(g.dealer, botDiscard(g, g.dealer));
       advance(room);
     });
   }
 
-  if (isBotSeat(g.turn)) {
+  if (isBotSeat(room, g.turn)) {
     return schedule(room, BOT_THINK_MIN + Math.random() * BOT_THINK_SPREAD, () => {
       botAct(g, g.turn);
       advance(room);
@@ -201,11 +211,11 @@ function applyAction(room, seat, action) {
     case 'nextHand': {
       if (g.phase !== 'handOver') throw new Error('hand is not over');
       room.ready.add(seat);
-      // Both humans have to look up from the result before the next deal.
-      // A seat is held even while its phone is offline, so a lock screen
+      // Everyone at the table has to look up from the result before the next
+      // deal. A seat is held even while its phone is offline, so a lock screen
       // pauses the game rather than skipping someone past the score — they
       // reconnect into this same overlay and press it themselves.
-      if (HUMAN_SEATS.every((s) => room.ready.has(s))) {
+      if (humanSeats(room).every((s) => room.ready.has(s))) {
         room.ready.clear();
         g.nextHand();
       }
@@ -268,15 +278,20 @@ wss.on('connection', (ws) => {
         room = rooms.get(String(msg.room).toUpperCase().trim());
         if (!room) return send(ws, { type: 'error', message: 'No game with that code.' });
       } else {
-        room = createRoom();
+        room = createRoom(Number(msg.players) || DEFAULT_HUMANS);
       }
 
       // Rejoin the seat this player already holds, otherwise take a free one.
-      seat = HUMAN_SEATS.find((s) => room.seats[s]?.playerId === playerId);
-      if (seat === undefined) seat = HUMAN_SEATS.find((s) => !room.seats[s]);
+      const seats = humanSeats(room);
+      seat = seats.find((s) => room.seats[s]?.playerId === playerId);
+      if (seat === undefined) seat = seats.find((s) => !room.seats[s]);
       if (seat === undefined) {
+        const n = room.humanCount;
         room = null;
-        return send(ws, { type: 'error', message: 'That game already has two players.' });
+        return send(ws, {
+          type: 'error',
+          message: `That game is full (${n} ${n === 1 ? 'player' : 'players'}).`,
+        });
       }
 
       if (room.seats[seat]) {
@@ -287,9 +302,16 @@ wss.on('connection', (ws) => {
       }
       if (room.game) room.game.names = seatNames(room);
 
-      send(ws, { type: 'joined', room: room.code, seat, playerId, chat: room.chat });
+      send(ws, {
+        type: 'joined',
+        room: room.code,
+        seat,
+        playerId,
+        humans: room.humanCount,
+        chat: room.chat,
+      });
 
-      if (!room.game && bothSeated(room)) startGame(room);
+      if (!room.game && allSeated(room)) startGame(room);
       else broadcast(room);
       return;
     }
@@ -323,7 +345,7 @@ wss.on('connection', (ws) => {
       clearTimeout(room.timer);
       room.timer = null;
 
-      if (!HUMAN_SEATS.some((s) => room.seats[s])) {
+      if (!humanSeats(room).some((s) => room.seats[s])) {
         rooms.delete(room.code);
       } else {
         // Whoever is left goes back to the lobby holding the same code, so a
@@ -370,7 +392,7 @@ const heartbeat = setInterval(() => {
 const reaper = setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {
-    const live = HUMAN_SEATS.some((s) => room.seats[s]?.sockets.size > 0);
+    const live = humanSeats(room).some((s) => room.seats[s]?.sockets.size > 0);
     if (!live && now - room.lastActivity > ROOM_TTL) {
       clearTimeout(room.timer);
       rooms.delete(code);

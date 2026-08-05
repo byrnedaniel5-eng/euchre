@@ -105,10 +105,38 @@
     el.hidden = false;
   }
 
+  // How many of the four seats are people; bots take the rest. Only matters
+  // when creating a room — joining one inherits its size.
+  let playerCount = store.get('playerCount', 2) || 2;
+
+  const PLAYER_HINTS = {
+    1: 'Just you and 3 bots. Your partner sits across from you.',
+    2: 'Two people on opposite teams, each partnered by a bot.',
+    3: 'Three people and 1 bot. The bot partners whoever joins second.',
+    4: 'Four people, no bots.',
+  };
+
+  function renderPlayerChoice() {
+    for (const b of $('opt-players').querySelectorAll('button')) {
+      b.classList.toggle('on', Number(b.dataset.v) === playerCount);
+    }
+    $('players-hint').textContent = PLAYER_HINTS[playerCount];
+  }
+
+  $('opt-players').onclick = (e) => {
+    const v = Number(e.target.closest('button')?.dataset.v);
+    if (!v) return;
+    playerCount = v;
+    store.set('playerCount', v);
+    renderPlayerChoice();
+  };
+  renderPlayerChoice();
+
   function doJoin(room) {
     const name = $('name').value.trim() || 'Player';
     store.set('name', name);
     pendingJoin = { room: room || null, name };
+    if (!room) pendingJoin.players = playerCount;
     $('join-error').hidden = true;
     if (ws && ws.readyState === WebSocket.OPEN) send({ type: 'join', playerId, ...pendingJoin });
     else connect();
@@ -169,6 +197,10 @@
 
   const teamOf = (seat) => seat % 2;
 
+  /** Seats occupied by people this game; the rest are bots. */
+  const humanSeats = () => Array.from({ length: state?.humans ?? 2 }, (_, i) => i);
+  const otherHumans = () => humanSeats().filter((s) => s !== mySeat);
+
   /** Screen position of a seat, from this player's point of view. */
   function positionOf(seat) {
     return ['bottom', 'left', 'top', 'right'][(seat - mySeat + 4) % 4];
@@ -223,9 +255,17 @@
       $('game').hidden = true;
       $('lobby').hidden = false;
       $('room-code').textContent = state.room;
-      $('lobby-status').textContent = state.seated.filter(Boolean).length === 1
-        ? 'You are in. Waiting for one more…'
-        : 'Starting…';
+      const inSoFar = state.seated.filter(Boolean).length;
+      const total = state.humans ?? 2;
+      const missing = total - inSoFar;
+      document.querySelector('#lobby h2').textContent =
+        missing === 1 ? 'Waiting for one more' : `Waiting for ${missing} more`;
+      const here = humanSeats()
+        .filter((s) => state.seated[s])
+        .map((s) => state.names[s])
+        .join(', ');
+      $('lobby-status').textContent =
+        missing > 0 ? `${inSoFar} of ${total} here — ${here}` : 'Starting…';
       return;
     }
 
@@ -482,19 +522,26 @@
       // long as you like reading the result.
       const ready = state.ready || [];
       const iAmReady = ready.includes(mySeat);
-      const otherSeat = 1 - mySeat;
-      const theyAreReady = ready.includes(otherSeat);
-      const otherName = state.names[otherSeat];
+      const others = otherHumans();
+      const waitingOn = others.filter((s) => !ready.includes(s));
+      const alsoReady = others.filter((s) => ready.includes(s));
+      const waitingText = () => {
+        if (!waitingOn.length) return 'Dealing…';
+        if (waitingOn.length === 1) return `Waiting for ${state.names[waitingOn[0]]}…`;
+        return `Waiting for ${waitingOn.length} others…`;
+      };
 
       $('ov-tricks').textContent = `Score: ${state.score[my]}–${state.score[1 - my]}` +
-        (theyAreReady && !iAmReady ? ` · ${otherName} is ready` : '');
+        (alsoReady.length && !iAmReady
+          ? ` · ${alsoReady.map((s) => state.names[s]).join(', ')} ready`
+          : '');
 
       const btn = $('ov-btn');
       btn.disabled = iAmReady;
-      btn.textContent = iAmReady ? `Waiting for ${otherName}…` : 'Next hand';
+      btn.textContent = iAmReady ? waitingText() : 'Next hand';
       btn.onclick = () => {
         btn.disabled = true;
-        btn.textContent = `Waiting for ${otherName}…`;
+        btn.textContent = waitingText();
         act({ kind: 'nextHand' });
       };
       return;
@@ -505,10 +552,12 @@
 
   function renderLog() {
     $('drawer-room').textContent = state.room || roomCode || '';
-    const other = state.connected ? state.connected[1 - mySeat] : true;
-    $('drawer-conn').textContent = other
-      ? `${state.names[1 - mySeat]} is connected`
-      : `${state.names[1 - mySeat]} is offline`;
+    const others = otherHumans();
+    $('drawer-conn').textContent = others.length === 0
+      ? 'solo against 3 bots'
+      : others
+          .map((s) => `${state.names[s]} ${state.connected?.[s] === false ? 'offline' : 'online'}`)
+          .join(' · ');
 
     const log = $('log');
     log.innerHTML = (state.log || []).map((l) => `<div>${escapeHtml(l)}</div>`).join('');
