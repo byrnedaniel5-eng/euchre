@@ -105,6 +105,10 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
 - `server/uicheck.js` — drives headless Chrome at 390×844 as player one against
   a scripted player two, screenshotting each stage and failing on console
   errors or horizontal overflow.
+- `server/cardshots.js` — renders the sample hand in all six card-style and
+  suit-colour combinations, at both in-hand and on-table size, screenshots
+  each, and asserts the styles are actually distinct and that four-colour mode
+  yields four different colours.
 - `server/tagcheck.js` — measures the seat name tag in every combination of
   dealer / maker / alone / trick dots, at two phone widths, in both a roomy
   and a cramped seat. Catches clipped badges and collisions with the trick
@@ -130,6 +134,28 @@ The server is authoritative. The browser never holds a hand it hasn't been
 sent, never decides what is legal, and can be closed and reopened at any point
 without affecting the game — which is what makes locking your phone mid-hand
 safe.
+
+## Card looks
+
+The ⋯ menu has a **Card style** and **Suit colours** switcher with a live
+preview. Choices are per-device and remembered.
+
+- **Bold** — big centred rank and suit. Most legible on a small phone.
+- **Classic** — corner indices on warm card stock with a serif face, and a
+  large centre pip. The second, rotated index only appears on the larger
+  in-hand cards; on a played card it collides with the centre.
+- **Jumbo** — oversized corner index with a big suit opposite it.
+
+**Four colour** keeps hearts and diamonds both warm (red / orange) and spades
+and clubs both dark (near-black / teal). That distinguishes all four suits
+while preserving the same-colour pairing the left bower depends on — a plain
+four-colour deck would break that cue.
+
+Styles live entirely in the stylesheet under `[data-cards=…]` and
+`[data-suits=…]`; every card renders one markup shape carrying corner indices,
+a centre rank and a centre pip, and each theme shows the parts it wants. Card
+sizes come from a single `--cs` scale factor, so a new theme is written once
+and works at every size.
 
 ## Notes
 

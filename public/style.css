@@ -372,27 +372,107 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
 
 /* ------------------------------------------------------------------ cards */
 
+/* Every card size is one scale factor away from the base, so a theme is
+   written once and works on the table, in your hand, and in the preview. */
 .card {
+  --cs: 1;
   position: relative;
-  width: 46px;
-  height: 64px;
+  width: calc(46px * var(--cs));
+  height: calc(64px * var(--cs));
   padding: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
   background: var(--card-face);
   color: var(--card-ink);
   border: 1px solid rgba(0, 0, 0, 0.25);
-  border-radius: 7px;
+  border-radius: calc(7px * var(--cs));
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   font-weight: 700;
   animation: deal 0.18s ease-out;
+  overflow: hidden;
 }
 .card.red { color: var(--card-red); }
-.card .r { font-size: 19px; line-height: 1; }
-.card .s { font-size: 16px; line-height: 1; }
+
+.card .mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1;
+}
+.card .mid .r { font-size: calc(19px * var(--cs)); line-height: 1; }
+.card .mid .s { font-size: calc(16px * var(--cs)); line-height: 1; }
+
+.card .corner {
+  display: none;
+  position: absolute;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.95;
+}
+.card .corner .cr { font-size: calc(11px * var(--cs)); font-weight: 800; }
+.card .corner .cs { font-size: calc(9px * var(--cs)); }
+.card .corner.tl { top: calc(3px * var(--cs)); left: calc(4px * var(--cs)); }
+.card .corner.br {
+  bottom: calc(3px * var(--cs));
+  right: calc(4px * var(--cs));
+  transform: rotate(180deg);
+}
+
+/* --- Classic: corner indices and a big centre pip, on warm card stock --- */
+[data-cards="classic"] .card {
+  background: #fdfaf0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+[data-cards="classic"] .card .corner { display: flex; }
+/* The corners already carry rank and suit, so the centre shows exactly one
+   thing: a pip on spot cards, the letter on court cards. Any more than that
+   and a 62px-wide card turns to mush. */
+[data-cards="classic"] .card .corner .cr { font-size: calc(10px * var(--cs)); }
+[data-cards="classic"] .card .corner .cs { font-size: calc(8px * var(--cs)); }
+[data-cards="classic"] .card .mid .r { display: none; }
+[data-cards="classic"] .card .mid .s { font-size: calc(23px * var(--cs)); }
+[data-cards="classic"] .card.court .mid .r { display: block; font-size: calc(22px * var(--cs)); }
+[data-cards="classic"] .card .corner.br { bottom: calc(1px * var(--cs)); right: calc(3px * var(--cs)); }
+[data-cards="classic"] .card.court .mid .s { display: none; }
+/* The second, rotated index is a luxury only the big in-hand cards can
+   afford. On a played card it collides with the centre. */
+[data-cards="classic"] .card .corner.br { display: none; }
+[data-cards="classic"] .hand .card .corner.br { display: flex; }
+
+/* --- Jumbo: oversized index, readable at arm's length --- */
+[data-cards="jumbo"] .card .mid { display: none; }
+[data-cards="jumbo"] .card .corner { display: flex; }
+[data-cards="jumbo"] .card .corner.tl {
+  top: calc(2px * var(--cs));
+  left: calc(5px * var(--cs));
+  align-items: flex-start;
+}
+[data-cards="jumbo"] .card .corner.tl .cr { font-size: calc(25px * var(--cs)); }
+[data-cards="jumbo"] .card .corner.tl .cs { font-size: calc(15px * var(--cs)); margin-top: -2px; }
+[data-cards="jumbo"] .card .corner.br {
+  transform: none;
+  bottom: calc(1px * var(--cs));
+  right: calc(3px * var(--cs));
+}
+[data-cards="jumbo"] .card .corner.br .cr { display: none; }
+[data-cards="jumbo"] .card .corner.br .cs { font-size: calc(21px * var(--cs)); opacity: 0.85; }
+
+/* --- Four colour: hearts/diamonds stay warm, spades/clubs stay dark, so the
+   same-colour bower pairing still reads at a glance. --- */
+[data-suits="vivid"] .card[data-suit="H"] { color: #d4212f; }
+[data-suits="vivid"] .card[data-suit="D"] { color: #e0700f; }
+[data-suits="vivid"] .card[data-suit="S"] { color: #14171d; }
+[data-suits="vivid"] .card[data-suit="C"] { color: #17607d; }
+[data-suits="vivid"] .bid-suits button[data-suit="H"] { color: #ff7b7b; }
+[data-suits="vivid"] .bid-suits button[data-suit="D"] { color: #ffab5e; }
+[data-suits="vivid"] .bid-suits button[data-suit="S"] { color: #dfe6ee; }
+[data-suits="vivid"] .bid-suits button[data-suit="C"] { color: #7cc7e0; }
+[data-suits="vivid"] #trump-badge .t-suit[data-suit="H"] { color: #ff7b7b; }
+[data-suits="vivid"] #trump-badge .t-suit[data-suit="D"] { color: #ffab5e; }
+[data-suits="vivid"] #trump-badge .t-suit[data-suit="S"] { color: #dfe6ee; }
+[data-suits="vivid"] #trump-badge .t-suit[data-suit="C"] { color: #7cc7e0; }
 
 @keyframes deal {
   from { opacity: 0; transform: translateY(-8px) scale(0.9); }
@@ -421,12 +501,9 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
 }
 
 .hand .card {
-  width: 62px;
-  height: 88px;
+  --cs: 1.36;
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
-.hand .card .r { font-size: 26px; }
-.hand .card .s { font-size: 22px; }
 
 .hand .card.playable { cursor: pointer; }
 .hand .card.playable:active { transform: translateY(-10px); }
@@ -529,8 +606,46 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
 .drawer-meta { font-size: 12px; color: var(--muted); margin: 6px 0 10px; }
 .drawer-meta b { color: var(--gold); letter-spacing: 0.15em; }
 
+.settings {
+  padding: 10px 12px 12px;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+}
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.set-label { font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+
+.seg { display: flex; gap: 4px; }
+.seg button {
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.seg button.on {
+  background: rgba(86, 189, 138, 0.3);
+  border-color: var(--accent);
+  color: #eafff3;
+}
+
+.card-preview {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  padding-top: 4px;
+}
+.card-preview .card { --cs: 1.15; animation: none; }
+
 .log {
-  flex: 0 0 38%;
+  flex: 0 0 26%;
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.55;
@@ -575,10 +690,8 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
 
 @media (max-height: 700px) {
   .hand { min-height: 88px; }
-  .hand .card { width: 54px; height: 76px; }
-  .hand .card .r { font-size: 22px; }
-  .hand .card .s { font-size: 18px; }
-  .card { width: 40px; height: 56px; }
+  .card { --cs: 0.87; }
+  .hand .card { --cs: 1.18; }
 }
 
 @media (min-width: 640px) {

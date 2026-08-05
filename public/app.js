@@ -133,12 +133,25 @@
     return ['bottom', 'left', 'top', 'right'][(seat - mySeat + 4) % 4];
   }
 
+  // One markup shape carries every card style: corner indices, a centre rank
+  // and a centre pip. Each theme in the stylesheet shows the parts it wants.
   function cardEl(card, extraClass = '') {
+    const rank = card[0];
+    const suit = card[1];
+    const label = rank === 'T' ? '10' : rank;
+    const sym = SUIT_SYMBOL[suit];
+    const court = 'AKQJ'.includes(rank);
+
     const el = document.createElement('div');
-    el.className = `card ${RED[card[1]] ? 'red' : ''} ${extraClass}`.trim();
-    el.innerHTML = `<span class="r">${card[0] === 'T' ? '10' : card[0]}</span>` +
-                   `<span class="s">${SUIT_SYMBOL[card[1]]}</span>`;
+    el.className = `card ${RED[suit] ? 'red' : ''} ${court ? 'court' : ''} ${extraClass}`
+      .replace(/\s+/g, ' ').trim();
     el.dataset.card = card;
+    el.dataset.suit = suit;
+    const corner = `<span class="cr">${label}</span><span class="cs">${sym}</span>`;
+    el.innerHTML =
+      `<span class="corner tl">${corner}</span>` +
+      `<span class="mid"><span class="r">${label}</span><span class="s">${sym}</span></span>` +
+      `<span class="corner br">${corner}</span>`;
     return el;
   }
 
@@ -205,6 +218,7 @@
       const s = badge.querySelector('.t-suit');
       s.textContent = SUIT_SYMBOL[state.trump];
       s.className = 't-suit' + (RED[state.trump] ? ' red' : '');
+      s.dataset.suit = state.trump;
 
       // Say out loud whose call this is — it is the whole story of the hand.
       const caller = badge.querySelector('.t-caller');
@@ -378,6 +392,7 @@
       for (const s of actions.suits) {
         const b = document.createElement('button');
         b.className = RED[s] ? 'red' : '';
+        b.dataset.suit = s;
         b.textContent = SUIT_SYMBOL[s];
         b.onclick = () => act({ kind: 'bid2', suit: s, alone: $('alone').checked });
         suits.appendChild(b);
@@ -472,6 +487,45 @@
     box.appendChild(el);
     box.scrollTop = box.scrollHeight;
   }
+
+  // ------------------------------------------------------- card appearance
+
+  const LOOK = {
+    cards: store.get('cardStyle', 'bold') || 'bold',
+    suits: store.get('suitColors', 'classic') || 'classic',
+  };
+
+  function applyLook() {
+    document.body.dataset.cards = LOOK.cards;
+    document.body.dataset.suits = LOOK.suits;
+    for (const [id, key] of [['opt-cards', 'cards'], ['opt-suits', 'suits']]) {
+      for (const b of $(id).querySelectorAll('button')) {
+        b.classList.toggle('on', b.dataset.v === LOOK[key]);
+      }
+    }
+    // A live sample: one of each suit, a bower, and a ten.
+    const preview = $('card-preview');
+    preview.innerHTML = '';
+    for (const c of ['JS', 'AH', 'TD', 'QC']) preview.appendChild(cardEl(c));
+    if (state) renderHand();
+  }
+
+  $('opt-cards').onclick = (e) => {
+    const v = e.target.closest('button')?.dataset.v;
+    if (!v) return;
+    LOOK.cards = v;
+    store.set('cardStyle', v);
+    applyLook();
+  };
+  $('opt-suits').onclick = (e) => {
+    const v = e.target.closest('button')?.dataset.v;
+    if (!v) return;
+    LOOK.suits = v;
+    store.set('suitColors', v);
+    applyLook();
+  };
+
+  applyLook();
 
   $('menu-btn').onclick = () => {
     $('drawer').hidden = false;

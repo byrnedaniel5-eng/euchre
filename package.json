@@ -12,6 +12,7 @@
     "test:e2e": "node server/e2e.js",
     "test:ui": "node server/uicheck.js",
     "test:tags": "node server/tagcheck.js",
+    "test:cards": "node server/cardshots.js",
     "smoke": "node server/smoke-remote.js",
     "tune": "node server/tune.js"
   },
