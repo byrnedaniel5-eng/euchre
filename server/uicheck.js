@@ -133,6 +133,74 @@ const check = (cond, msg) => {
   if (!cond) failures++;
 };
 
+/** Poll a page expression until truthy. Keeps the test independent of the
+    server's trick-pause and bot-thinking delays, which change over time. */
+let cdpRef = null;
+const until = async (expression, ms = 30000) => {
+  const t0 = Date.now();
+  let last;
+  while (Date.now() - t0 < ms) {
+    last = await cdpRef.eval(expression);
+    if (last) return last;
+    await sleep(200);
+  }
+  return last;
+};
+
+/** Taps a legal card, retrying until one is actually there. The set of legal
+    cards changes underneath us as the other three play, so selecting and
+    clicking in two steps races; this does both in one page evaluation. */
+const clickPlayable = async (ms = 20000) => {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    const clicked = await cdpRef.eval(`(() => {
+      const c = document.querySelector('#hand .card.playable');
+      if (!c) return false;
+      c.click();
+      return true;
+    })()`);
+    if (clicked) return true;
+    await sleep(200);
+  }
+  return false;
+};
+
+/** Keeps the whole game flowing — plays cards and clears result screens —
+    until `expression` holds. Used when waiting for a situation that only
+    comes round on some deals, such as this player being asked to bid. */
+const pump = async (expression, ms = 90000) => {
+  const t0 = Date.now();
+  let last;
+  while (Date.now() - t0 < ms) {
+    last = await cdpRef.eval(expression);
+    if (last) return last;
+    await cdpRef.eval(`(() => {
+      const ov = document.getElementById('overlay');
+      const btn = document.getElementById('ov-btn');
+      if (!ov.hidden && !btn.disabled) { btn.click(); return; }
+      const c = document.querySelector('#hand .card.playable');
+      if (c) c.click();
+    })()`);
+    await sleep(300);
+  }
+  return last;
+};
+
+/** Same, but plays any legal card each tick so the game keeps moving. */
+const untilPlaying = async (expression, ms = 30000) => {
+  const t0 = Date.now();
+  let last;
+  while (Date.now() - t0 < ms) {
+    last = await cdpRef.eval(expression);
+    if (last) return last;
+    await cdpRef.eval(
+      `(() => { const c = document.querySelector('#hand .card.playable');
+                if (c) c.click(); return !!c; })()`);
+    await sleep(300);
+  }
+  return last;
+};
+
 try {
   // Wait for the debugger endpoint.
   let targets = null;
@@ -148,6 +216,7 @@ try {
 
   const page = targets.find((t) => t.type === 'page');
   const cdp = await CDP.attach(page.webSocketDebuggerUrl);
+  cdpRef = cdp;
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
   await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -192,40 +261,72 @@ try {
     `[...document.querySelectorAll('.seat .tag')].map(t => t.textContent)`);
   check(seatTags.some((t) => t.includes('You')), `seats labelled (${seatTags.join(' | ')})`);
 
-  // Wait until the browser player is asked to bid.
-  for (let i = 0; i < 40; i++) {
-    if (await cdp.eval(`!document.getElementById('bid-panel').hidden`)) break;
-    await sleep(400);
-  }
-  check(await cdp.eval(`!document.getElementById('bid-panel').hidden`), 'bidding panel appeared');
-  check(await cdp.eval(`!document.getElementById('upcard-area').hidden`), 'upcard is face up');
-  await cdp.shot('3-bidding-round1');
+  // A bot may call trump before the bid ever reaches this player, so keep the
+  // game running across deals until this player is the one being asked.
+  check(await pump(`!document.getElementById('bid-panel').hidden`),
+    'bidding panel appeared');
 
-  console.log('\n4. order it up');
-  await cdp.eval(`document.getElementById('bid-order').click(); true`);
-  await sleep(1600);
-  const trumpShown = await cdp.eval(
+  const round1 = await cdp.eval(`!document.getElementById('bid-order').hidden`);
+  if (round1) {
+    check(await cdp.eval(`!document.getElementById('upcard-area').hidden`),
+      'round 1: the turned-up card is showing');
+  } else {
+    check(await cdp.eval(`document.querySelectorAll('#bid-suits button').length`) === 3,
+      'round 2: three callable suits offered');
+  }
+  await cdp.shot('3-bidding');
+
+  console.log(`\n4. call trump (round ${round1 ? 1 : 2})`);
+  await cdp.eval(round1
+    ? `document.getElementById('bid-order').click(); true`
+    : `document.querySelector('#bid-suits button').click(); true`);
+  const trumpShown = await until(
     `document.getElementById('trump-badge').hidden ? null
       : document.querySelector('#trump-badge .t-suit').textContent`);
   check(!!trumpShown, `trump badge shows ${trumpShown}`);
+  const caller = await until(`document.querySelector('#trump-badge .t-caller').textContent`);
+  check(/called it/.test(caller || ''), `trump badge names who called it ("${caller}")`);
   await cdp.shot('4-trump-set');
 
   console.log('\n5. play through a trick');
-  for (let i = 0; i < 60; i++) {
-    const playable = await cdp.eval(`document.querySelectorAll('#hand .card.playable').length`);
-    if (playable > 0) break;
-    await sleep(400);
+  // If this player dealt, the first thing asked of them is a discard, not a
+  // lead — spend that click before treating the next one as a played card.
+  if (await until(`/discard/i.test(document.getElementById('prompt').textContent)`, 2500)) {
+    await clickPlayable();
+    console.log('        (this player dealt — discarded first)');
   }
-  check(await cdp.eval(`document.querySelectorAll('#hand .card.playable').length`) > 0,
+
+  check(await until(`document.querySelectorAll('#hand .card.playable').length > 0`),
     'own cards became tappable on your turn');
   await cdp.shot('5-your-turn');
 
-  await cdp.eval(`document.querySelector('#hand .card.playable').click(); true`);
-  await sleep(2600);
-  const onTable = await cdp.eval(`document.querySelectorAll('#trick-area .tslot .card').length`);
-  check(onTable >= 1, `cards appear on the table (${onTable} showing)`);
+  check(await clickPlayable(), 'played a card');
+  check(await until(`document.querySelectorAll('#trick-area .tslot .card').length >= 2`),
+    'cards appear on the table');
   const backs = await cdp.eval(`document.querySelectorAll('.seat .backs i').length`);
   check(backs > 0, `opponents show face-down cards (${backs})`);
+
+  // The per-team trick tally in the HUD is how you follow a hand being won.
+  // Completing a trick can need more turns from this player, so keep tapping
+  // whatever is legal while waiting rather than assuming one card is enough.
+  const sawTricks = await untilPlaying(
+    `document.querySelector('#score-us .tricks').textContent.length > 0
+     || document.querySelector('#score-them .tricks').textContent.length > 0`, 40000);
+  if (!sawTricks) {
+    const diag = await cdp.eval(`JSON.stringify({
+      us: document.querySelector('#score-us .tricks').textContent,
+      them: document.querySelector('#score-them .tricks').textContent,
+      prompt: document.getElementById('prompt').textContent,
+      note: document.getElementById('trick-note').textContent,
+      onTable: document.querySelectorAll('#trick-area .tslot .card').length,
+      playable: document.querySelectorAll('#hand .card.playable').length,
+      inHand: document.querySelectorAll('#hand .card').length,
+      overlay: !document.getElementById('overlay').hidden,
+      log: [...document.querySelectorAll('#log div')].slice(-4).map(d => d.textContent),
+    })`);
+    console.log(`        diagnostic: ${diag}`);
+  }
+  check(sawTricks, 'HUD shows tricks taken this hand');
   await cdp.shot('6-trick-in-progress');
 
   console.log('\n6. play out the hand');

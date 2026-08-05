@@ -26,7 +26,8 @@ const isBotSeat = (seat) => seat === 2 || seat === 3;
 const FAST = process.env.EUCHRE_FAST === '1';
 const BOT_THINK_MIN = FAST ? 1 : 650;
 const BOT_THINK_SPREAD = FAST ? 1 : 500;
-const TRICK_SWEEP = FAST ? 2 : 1700;
+// Long enough to read four cards and see who took them before they clear.
+const TRICK_SWEEP = FAST ? 2 : 2800;
 const ROOM_TTL = 6 * 60 * 60 * 1000; // rooms survive a long lunch break
 
 // ------------------------------------------------------------------- rooms
@@ -223,9 +224,21 @@ function applyAction(room, seat, action) {
 // ------------------------------------------------------------------- server
 
 const app = express();
-app.use(express.static(PUBLIC_DIR, { maxAge: '1h' }));
+
+// "no-cache" still lets the browser keep a copy — it just has to revalidate
+// with us first, so an ETag match costs one 304 and nothing else. Never use a
+// max-age here: a phone that cached the old client keeps playing the old
+// client for that long after a deploy, with no way for the player to tell.
+app.use(express.static(PUBLIC_DIR, {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+}));
 app.get('/healthz', (_req, res) => res.json({ ok: true, rooms: rooms.size }));
-app.get('*', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });

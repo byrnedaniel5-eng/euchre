@@ -177,17 +177,46 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
 
 .trump-badge {
   flex: 1;
+  min-width: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: 1px;
+  padding: 4px 8px;
   background: rgba(0, 0, 0, 0.24);
   border: 1px solid rgba(232, 195, 102, 0.35);
   border-radius: 12px;
 }
+.trump-badge .t-row { display: flex; align-items: center; gap: 7px; }
 .trump-badge .t-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
-.trump-badge .t-suit { font-size: 24px; line-height: 1; }
+.trump-badge .t-suit { font-size: 22px; line-height: 1; }
+
+/* Who called it. Green when it's our side on the hook, red when it's theirs. */
+.trump-badge .t-caller {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trump-badge .t-caller.ours { color: #9fe3bd; }
+.trump-badge .t-caller.theirs { color: #f0a9a9; }
+.trump-badge .t-caller:empty { display: none; }
+
+/* Tricks taken this hand, so you can watch a hand being won or lost. */
+.score .tricks {
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: var(--gold);
+  min-height: 11px;
+}
+.score .tricks:empty { min-height: 0; }
 .trump-badge .t-suit.red { color: #ff6b6b; }
 .trump-badge .t-suit:not(.red) { color: #fff; }
 #hud > .trump-badge[hidden] + .score { margin-left: auto; }

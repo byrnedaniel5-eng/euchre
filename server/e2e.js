@@ -147,6 +147,15 @@ try {
     });
   });
 
+  console.log('\n0. clients are never cached past a deploy');
+  for (const asset of ['/', '/app.js', '/style.css', '/index.html']) {
+    const res = await fetch(`http://127.0.0.1:${PORT}${asset}`);
+    const cc = res.headers.get('cache-control') || '';
+    const maxAge = /max-age=(\d+)/.exec(cc);
+    const stale = maxAge && Number(maxAge[1]) > 0;
+    assert(!stale, `${asset.padEnd(12)} is revalidated ("${cc || 'none'}")`);
+  }
+
   console.log('\n1. two players join');
   const dan = new Client('Dan', 'pid-dan');
   await dan.connect(null);

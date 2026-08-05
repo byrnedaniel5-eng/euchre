@@ -51,12 +51,16 @@
 <section id="game" class="screen" hidden>
 
   <header id="hud">
-    <div class="score" id="score-us"><span class="label">You</span><span class="value">0</span></div>
-    <div id="trump-badge" class="trump-badge" hidden>
-      <span class="t-label">Trump</span>
-      <span class="t-suit"></span>
+    <div class="score" id="score-us">
+      <span class="label">You</span><span class="value">0</span><span class="tricks"></span>
     </div>
-    <div class="score them" id="score-them"><span class="label">Them</span><span class="value">0</span></div>
+    <div id="trump-badge" class="trump-badge" hidden>
+      <div class="t-row"><span class="t-label">Trump</span><span class="t-suit"></span></div>
+      <div class="t-caller"></div>
+    </div>
+    <div class="score them" id="score-them">
+      <span class="label">Them</span><span class="value">0</span><span class="tricks"></span>
+    </div>
     <button id="menu-btn" class="icon-btn" aria-label="Menu">⋯</button>
   </header>
 

@@ -193,12 +193,30 @@
     $('score-us').querySelector('.value').textContent = state.score[my];
     $('score-them').querySelector('.value').textContent = state.score[1 - my];
 
+    // Tricks taken this hand, per team — three of these is the hand.
+    const teamTricks = [0, 1].map((t) =>
+      state.tricksWon.reduce((sum, n, seat) => sum + (teamOf(seat) === t ? n : 0), 0));
+    $('score-us').querySelector('.tricks').textContent = '●'.repeat(teamTricks[my]);
+    $('score-them').querySelector('.tricks').textContent = '●'.repeat(teamTricks[1 - my]);
+
     const badge = $('trump-badge');
     if (state.trump) {
       badge.hidden = false;
       const s = badge.querySelector('.t-suit');
       s.textContent = SUIT_SYMBOL[state.trump];
       s.className = 't-suit' + (RED[state.trump] ? ' red' : '');
+
+      // Say out loud whose call this is — it is the whole story of the hand.
+      const caller = badge.querySelector('.t-caller');
+      if (state.maker === null || state.maker === undefined) {
+        caller.textContent = '';
+        caller.className = 't-caller';
+      } else {
+        const ours = teamOf(state.maker) === my;
+        const who = state.maker === mySeat ? 'You' : state.names[state.maker];
+        caller.textContent = `${who} called it${state.alone ? ' — alone' : ''}`;
+        caller.className = 't-caller ' + (ours ? 'ours' : 'theirs');
+      }
     } else {
       badge.hidden = true;
     }
