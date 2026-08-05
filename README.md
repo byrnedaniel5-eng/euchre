@@ -105,6 +105,12 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
 - `server/uicheck.js` — drives headless Chrome at 390×844 as player one against
   a scripted player two, screenshotting each stage and failing on console
   errors or horizontal overflow.
+- `server/tagcheck.js` — measures the seat name tag in every combination of
+  dealer / maker / alone / trick dots, at two phone widths, in both a roomy
+  and a cramped seat. Catches clipped badges and collisions with the trick
+  pile, which are invisible until the one hand where they happen.
+- `server/smoke-remote.js` — the same idea as the end-to-end test but pointed
+  at a deployed URL: `npm run smoke https://your-app.onrender.com`.
 
 ## Layout
 
@@ -131,6 +137,11 @@ safe.
   a lock screen, or a walk out of wifi range all resume the same seat. The seat
   is never given away, so nobody can take it while you're gone.
 - Rooms are reaped six hours after the last person leaves.
+- **The next hand is dealt only when both players have pressed "Next hand."**
+  There is no timer on the result screen, so neither of you gets rushed past
+  the score. If one phone is locked or offline the game simply waits — that
+  seat is held, and they land back on the same result screen when they
+  reconnect and can press it themselves.
 - The trick pause and bot "thinking" delays are at the top of
   `server/index.js`; `EUCHRE_FAST=1` collapses them, which is how the
   end-to-end test plays a full game in a few seconds.

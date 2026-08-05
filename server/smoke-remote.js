@@ -41,10 +41,19 @@ class Client {
     });
   }
   think() {
-    const a = this.state?.you?.actions;
+    const s = this.state;
+    const act = (action) => { this.moves++; this.ws.send(JSON.stringify({ type: 'action', action })); };
+    if (s?.phase === 'handOver') {
+      // Both players press; only once per hand or we loop with the server.
+      if (this.readyForHand !== s.handNumber) {
+        this.readyForHand = s.handNumber;
+        act({ kind: 'nextHand' });
+      }
+      return;
+    }
+    const a = s?.you?.actions;
     if (!a) return;
     const pick = (xs) => xs[Math.floor(Math.random() * xs.length)];
-    const act = (action) => { this.moves++; this.ws.send(JSON.stringify({ type: 'action', action })); };
     if (a.type === 'bid1') act({ kind: 'bid1', order: Math.random() < 0.35 || !a.canPass });
     else if (a.type === 'bid2') act({ kind: 'bid2', suit: (Math.random() < 0.4 || !a.canPass) ? pick(a.suits) : null });
     else if (a.type === 'discard') act({ kind: 'discard', card: pick(a.cards) });

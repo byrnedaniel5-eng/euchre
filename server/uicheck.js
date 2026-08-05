@@ -80,10 +80,18 @@ function scriptedPlayer(room, name) {
     if (msg.type === 'joined') { p.seat = msg.seat; p.room = msg.room; }
     if (msg.type !== 'state') return;
     p.state = msg.state;
-    const a = msg.state.you?.actions;
-    if (!a) return;
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const act = (action) => p.ws.send(JSON.stringify({ type: 'action', action }));
+    if (msg.state.phase === 'handOver') {
+      // The next hand needs both players; send once per hand, not per update.
+      if (p.readyForHand !== msg.state.handNumber) {
+        p.readyForHand = msg.state.handNumber;
+        setTimeout(() => act({ kind: 'nextHand' }), 600);
+      }
+      return;
+    }
+    const a = msg.state.you?.actions;
+    if (!a) return;
     // Always pass in bidding so the browser player gets the interesting choices.
     if (a.type === 'bid1') act({ kind: 'bid1', order: !a.canPass });
     else if (a.type === 'bid2') act({ kind: 'bid2', suit: a.canPass ? null : pick(a.suits) });

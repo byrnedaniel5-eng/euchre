@@ -27,7 +27,6 @@ const FAST = process.env.EUCHRE_FAST === '1';
 const BOT_THINK_MIN = FAST ? 1 : 650;
 const BOT_THINK_SPREAD = FAST ? 1 : 500;
 const TRICK_SWEEP = FAST ? 2 : 1700;
-const HAND_REVIEW = FAST ? 2 : 6000;
 const ROOM_TTL = 6 * 60 * 60 * 1000; // rooms survive a long lunch break
 
 // ------------------------------------------------------------------- rooms
@@ -56,6 +55,9 @@ function createRoom() {
     game: null,
     timer: null,
     chat: [],
+    // Seats that have pressed "next hand". The hand only advances once both
+    // humans have, so neither of you gets rushed past the result.
+    ready: new Set(),
     lastActivity: Date.now(),
   };
   rooms.set(code, room);
@@ -78,6 +80,7 @@ function bothSeated(room) {
 function startGame(room) {
   clearTimeout(room.timer);
   room.timer = null;
+  room.ready.clear();
   room.game = new EuchreGame({ names: seatNames(room) });
   advance(room);
 }
@@ -103,7 +106,12 @@ function broadcast(room) {
     const p = room.seats[seat];
     if (!p) continue;
     const state = room.game
-      ? { ...room.game.viewFor(seat), room: room.code, connected: connectionFlags(room) }
+      ? {
+          ...room.game.viewFor(seat),
+          room: room.code,
+          connected: connectionFlags(room),
+          ready: HUMAN_SEATS.filter((s) => room.ready.has(s)),
+        }
       : lobbyState(room);
     for (const ws of p.sockets) send(ws, { type: 'state', state });
   }
@@ -151,14 +159,8 @@ function advance(room) {
     });
   }
 
-  if (g.phase === 'handOver') {
-    return schedule(room, HAND_REVIEW, () => {
-      g.nextHand();
-      advance(room);
-    });
-  }
-
-  if (g.phase === 'gameOver') return;
+  // handOver and gameOver both wait on the players, not on a clock.
+  if (g.phase === 'handOver' || g.phase === 'gameOver') return;
 
   // A dealer who is sitting out a loner still picks up and discards, but the
   // hand is dead — don't make a human click through a meaningless choice.
@@ -195,10 +197,19 @@ function applyAction(room, seat, action) {
     case 'play':
       g.playCard(seat, action.card);
       break;
-    case 'nextHand':
+    case 'nextHand': {
       if (g.phase !== 'handOver') throw new Error('hand is not over');
-      g.nextHand();
+      room.ready.add(seat);
+      // Both humans have to look up from the result before the next deal.
+      // A seat is held even while its phone is offline, so a lock screen
+      // pauses the game rather than skipping someone past the score — they
+      // reconnect into this same overlay and press it themselves.
+      if (HUMAN_SEATS.every((s) => room.ready.has(s))) {
+        room.ready.clear();
+        g.nextHand();
+      }
       break;
+    }
     case 'newGame':
       if (g.phase !== 'gameOver') throw new Error('game is not over');
       startGame(room);

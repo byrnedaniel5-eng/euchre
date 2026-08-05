@@ -209,6 +209,7 @@
       const pos = positionOf(seat);
       const el = document.querySelector(`.seat.${pos}`);
       const tag = el.querySelector('.tag');
+      const marks = el.querySelector('.marks');
       const backs = el.querySelector('.backs');
       const slot = document.querySelector(`#trick-area .tslot.${pos}`);
 
@@ -217,17 +218,23 @@
       const out = state.sittingOut === seat;
       const pips = '●'.repeat(state.tricksWon[seat]);
 
-      const bits = [`<span>${isMe ? 'You' : state.names[seat]}</span>`];
-      if (seat === state.dealer) bits.push('<span class="badge">D</span>');
-      if (seat === state.maker) bits.push(`<span class="badge">${state.alone ? 'ALONE' : 'MAKER'}</span>`);
-      if (out) bits.push('<span class="off">sitting out</span>');
-      if (pips) bits.push(`<span class="pips">${pips}</span>`);
-
-      tag.innerHTML = bits.join('');
+      // Pill: identity only. Marks line: whatever is true this hand.
+      const name = escapeHtml(isMe ? 'You' : state.names[seat]);
+      tag.innerHTML = `<span>${name}</span>` +
+        (seat === state.dealer ? '<span class="badge">D</span>' : '');
       tag.className = 'tag' +
         (seat === state.turn && !out ? ' active' : '') +
         (isPartner ? ' partner' : '') +
         (out ? ' dim' : '');
+
+      const markBits = [];
+      if (seat === state.maker) {
+        markBits.push(`<span class="badge">${state.alone ? 'ALONE' : 'MAKER'}</span>`);
+      }
+      if (out) markBits.push('<span class="off">sitting out</span>');
+      if (pips) markBits.push(`<span class="pips" title="tricks taken">${pips}</span>`);
+      marks.innerHTML = markBits.join('');
+      marks.className = 'marks' + (out ? ' dim' : '');
 
       if (backs) {
         const n = out ? 0 : state.handCounts[seat];
@@ -373,6 +380,7 @@
       $('ov-title').textContent = won ? 'You win!' : 'They win';
       $('ov-body').textContent = `${state.score[my]}–${state.score[1 - my]}`;
       $('ov-tricks').textContent = '';
+      $('ov-btn').disabled = false;
       $('ov-btn').textContent = 'Play again';
       $('ov-btn').onclick = () => act({ kind: 'newGame' });
       return;
@@ -395,10 +403,24 @@
       $('ov-body').textContent =
         `${maker} called ${SUIT_NAME[s.trump]}${s.alone ? ' alone' : ''} and took ` +
         `${s.makerTricks} of 5. ${weScored ? 'You' : 'They'} score ${s.points}.`;
-      $('ov-tricks').textContent = `Score: ${state.score[my]}–${state.score[1 - my]}`;
-      $('ov-btn').textContent = 'Next hand';
-      $('ov-btn').onclick = () => {
-        ov.hidden = true;
+
+      // The next hand is dealt only when both of you have pressed, so take as
+      // long as you like reading the result.
+      const ready = state.ready || [];
+      const iAmReady = ready.includes(mySeat);
+      const otherSeat = 1 - mySeat;
+      const theyAreReady = ready.includes(otherSeat);
+      const otherName = state.names[otherSeat];
+
+      $('ov-tricks').textContent = `Score: ${state.score[my]}–${state.score[1 - my]}` +
+        (theyAreReady && !iAmReady ? ` · ${otherName} is ready` : '');
+
+      const btn = $('ov-btn');
+      btn.disabled = iAmReady;
+      btn.textContent = iAmReady ? `Waiting for ${otherName}…` : 'Next hand';
+      btn.onclick = () => {
+        btn.disabled = true;
+        btn.textContent = `Waiting for ${otherName}…`;
         act({ kind: 'nextHand' });
       };
       return;

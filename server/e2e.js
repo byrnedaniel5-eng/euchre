@@ -34,6 +34,7 @@ class Client {
     this.chat = [];
     this.errors = [];
     this.autoPlay = false; // switched on once the inspection checks are done
+    this.autoNext = true; // press "next hand" automatically
     this.moves = 0;
   }
 
@@ -78,7 +79,15 @@ class Client {
     if (!s || s.phase === 'lobby') return;
 
     if (s.phase === 'gameOver') return;
-    if (s.phase === 'handOver') return; // server auto-advances
+    if (s.phase === 'handOver') {
+      // Both players must press. Guard against re-sending on every rebroadcast,
+      // which would otherwise ping-pong with the server forever.
+      if (this.autoNext && this.readyForHand !== s.handNumber) {
+        this.readyForHand = s.handNumber;
+        this.act({ kind: 'nextHand' });
+      }
+      return;
+    }
 
     const a = s.you?.actions;
     if (!a) return;
@@ -170,11 +179,31 @@ try {
   await waitFor(() => gf.chat.length > 0, 'chat delivery');
   assert(gf.chat[0].text === 'good luck' && gf.chat[0].from === 'Dan', 'chat arrives with a name');
 
-  console.log('\n5. play a full game to ten');
+  console.log('\n5. the next hand waits for both players');
+  dan.autoPlay = gf.autoPlay = true;
+  dan.autoNext = gf.autoNext = false;
+  dan.think();
+  gf.think();
+  await waitFor(() => dan.state.phase === 'handOver', 'first hand to be scored');
+  const handNo = dan.state.handNumber;
+
+  dan.act({ kind: 'nextHand' });
+  await sleep(500);
+  assert(dan.state.phase === 'handOver' && dan.state.handNumber === handNo,
+    'one player pressing does NOT deal the next hand');
+  assert((dan.state.ready || []).includes(0), 'the presser is marked ready');
+  assert((gf.state.ready || []).includes(0), 'the other player can see who is ready');
+  assert(!(gf.state.ready || []).includes(1), 'the one who has not pressed is not ready');
+
+  gf.act({ kind: 'nextHand' });
+  await waitFor(() => dan.state.handNumber === handNo + 1, 'next hand once both pressed', 10000);
+  assert(true, 'both pressing deals the next hand');
+  assert((dan.state.ready || []).length === 0, 'ready flags reset for the new hand');
+
+  console.log('\n6. play a full game to ten');
   dan.errors.length = 0;
   gf.errors.length = 0;
-  dan.autoPlay = true;
-  gf.autoPlay = true;
+  dan.autoNext = gf.autoNext = true;
   dan.think();
   gf.think();
   await waitFor(() => dan.state.phase === 'gameOver', 'game to finish', 120000);
@@ -185,12 +214,12 @@ try {
     `no illegal-move errors during play (${dan.errors.concat(gf.errors).slice(0, 3)})`);
   assert(dan.moves + gf.moves > 50, `players actually moved (${dan.moves + gf.moves} actions)`);
 
-  console.log('\n6. rematch');
+  console.log('\n7. rematch');
   dan.act({ kind: 'newGame' });
   await waitFor(() => dan.state.phase !== 'gameOver', 'new game');
   assert(dan.state.score[0] === 0 && dan.state.score[1] === 0, 'scores reset');
 
-  console.log('\n7. drop a phone mid-hand and come back');
+  console.log('\n8. drop a phone mid-hand and come back');
   dan.autoPlay = false;
   gf.autoPlay = false;
   await sleep(50);
@@ -207,13 +236,13 @@ try {
   assert(danAgain.state.score.join() === scoreBefore, 'score survived the disconnect');
   assert(JSON.stringify(danAgain.state.you.hand) === handBefore, 'hand survived the disconnect');
 
-  console.log('\n8. a third person cannot barge in');
+  console.log('\n9. a third person cannot barge in');
   const rando = new Client('Nope', 'pid-rando');
   await rando.connect(dan.room).catch(() => {});
   await sleep(150);
   assert(rando.errors.some((e) => /two players/i.test(e)), 'third joiner is turned away');
 
-  console.log('\n9. finish the resumed game');
+  console.log('\n10. finish the resumed game');
   danAgain.autoPlay = true;
   gf.autoPlay = true;
   danAgain.think();

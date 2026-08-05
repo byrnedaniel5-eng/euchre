@@ -218,7 +218,12 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
   display: flex;
   align-items: center;
   gap: 7px;
+  max-width: 150px;
 }
+/* Side seats get whatever is left after the trick pile and a gutter, so a long
+   name truncates instead of creeping over the cards on a narrow phone.
+   92px = half the trick diamond (78) + 14px of clearance. */
+.seat.left, .seat.right { max-width: calc(50% - 92px); }
 .seat.top    { top: 10px;    left: 50%; transform: translateX(-50%); flex-direction: column; }
 .seat.bottom { bottom: 10px; left: 50%; transform: translateX(-50%); flex-direction: column-reverse; }
 .seat.left   { left: 10px;   top: 50%; transform: translateY(-50%); flex-direction: column; }
@@ -237,11 +242,14 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
 }
 .backs:empty { height: 0; }
 
+/* The pill carries only the name and the dealer marker. Everything that comes
+   and goes during a hand — maker, alone, trick dots — lives on its own line
+   below, so nothing ever competes for the pill's width and gets clipped. */
 .tag {
   display: flex;
   align-items: center;
   gap: 5px;
-  max-width: 108px;
+  max-width: 100%;
   padding: 4px 9px;
   font-size: 12px;
   font-weight: 600;
@@ -253,22 +261,40 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
   border-radius: 999px;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
+.tag > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.marks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.marks:empty { display: none; }
 .tag.active {
   border-color: var(--gold);
   box-shadow: 0 0 0 1px var(--gold), 0 0 14px rgba(232, 195, 102, 0.4);
 }
 .tag.partner { color: #9fe3bd; }
-.tag .pips { color: var(--gold); letter-spacing: -1px; font-size: 11px; }
-.tag .badge {
+.pips { color: var(--gold); letter-spacing: 1px; font-size: 12px; white-space: nowrap; }
+.badge {
   font-size: 9px;
   padding: 1px 5px;
   border-radius: 6px;
   background: rgba(232, 195, 102, 0.22);
   color: var(--gold);
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
-.tag .off { opacity: 0.45; }
-.tag.dim { opacity: 0.42; }
+.marks .off { opacity: 0.55; font-weight: 500; }
+.tag.dim, .marks.dim { opacity: 0.42; }
 
 /* The trick is dealt into a diamond in the middle, not out at the seats —
    so all four cards read as one pile you can compare at a glance. */
@@ -277,7 +303,7 @@ button.ghost { background: rgba(255, 255, 255, 0.06); }
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 168px;
+  width: 156px;
   height: 188px;
   pointer-events: none;
 }
