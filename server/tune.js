@@ -5,7 +5,7 @@
 //   node server/tune.js
 
 import { EuchreGame } from './euchre.js';
-import { botAct, PROFILE, seatProfiles } from './bot.js';
+import { botAct, PROFILE } from './bot.js';
 
 const BASE = { ...PROFILE };
 const GAMES = 4000;
@@ -19,14 +19,14 @@ function mulberry32(a) {
   };
 }
 
-function playGame(rng) {
+function playGame(rng, team0, team1) {
   const g = new EuchreGame({ rng });
   let steps = 0;
   while (g.phase !== 'gameOver') {
     if (++steps > 5000) throw new Error('stuck');
     if (g.phase === 'trickComplete') { g.finishTrick(); continue; }
     if (g.phase === 'handOver') { g.nextHand(); continue; }
-    botAct(g, g.turn);
+    botAct(g, g.turn, g.turn % 2 === 0 ? team0 : team1);
   }
   return g.score[0] > g.score[1] ? 0 : 1;
 }
@@ -36,18 +36,11 @@ function match(candidate, games = GAMES) {
   let wins = 0;
   for (let i = 0; i < games; i++) {
     const candidateOnTeam0 = i % 2 === 0;
-    if (candidateOnTeam0) {
-      seatProfiles[0] = seatProfiles[2] = candidate;
-      seatProfiles[1] = seatProfiles[3] = BASE;
-    } else {
-      seatProfiles[0] = seatProfiles[2] = BASE;
-      seatProfiles[1] = seatProfiles[3] = candidate;
-    }
-    const winningTeam = playGame(mulberry32(i * 104729 + 7));
-    const candidateTeam = candidateOnTeam0 ? 0 : 1;
-    if (winningTeam === candidateTeam) wins++;
+    const winningTeam = candidateOnTeam0
+      ? playGame(mulberry32(i * 104729 + 7), candidate, BASE)
+      : playGame(mulberry32(i * 104729 + 7), BASE, candidate);
+    if (winningTeam === (candidateOnTeam0 ? 0 : 1)) wins++;
   }
-  seatProfiles.fill(null);
   return wins / games;
 }
 

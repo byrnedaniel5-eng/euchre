@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
 import { EuchreGame } from './euchre.js';
-import { botAct, botDiscard } from './bot.js';
+import { botAct, botDiscard, skillByKey, DEFAULT_SKILL } from './bot.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -52,12 +52,13 @@ function newRoomCode() {
   return code;
 }
 
-function createRoom(humanCount = DEFAULT_HUMANS) {
+function createRoom(humanCount = DEFAULT_HUMANS, skillKey) {
   const code = newRoomCode();
   const room = {
     code,
     // How many of the four seats are people. The rest are bots.
     humanCount: Math.min(MAX_SEATS, Math.max(1, humanCount | 0)),
+    skill: skillByKey(skillKey),
     // One entry per seat; only the human ones are ever filled.
     seats: [null, null, null, null],
     game: null,
@@ -105,6 +106,7 @@ function lobbyState(room) {
     phase: 'lobby',
     room: room.code,
     humans: room.humanCount,
+    difficulty: room.skill.label,
     names: seatNames(room),
     seated: humanSeats(room).map((s) => !!room.seats[s]),
   };
@@ -120,6 +122,7 @@ function broadcast(room) {
           ...room.game.viewFor(seat),
           room: room.code,
           humans: room.humanCount,
+          difficulty: room.skill.label,
           connected: connectionFlags(room),
           ready: humanSeats(room).filter((s) => room.ready.has(s)),
         }
@@ -184,7 +187,7 @@ function advance(room) {
 
   if (isBotSeat(room, g.turn)) {
     return schedule(room, BOT_THINK_MIN + Math.random() * BOT_THINK_SPREAD, () => {
-      botAct(g, g.turn);
+      botAct(g, g.turn, room.skill || DEFAULT_SKILL);
       advance(room);
     });
   }
@@ -278,7 +281,7 @@ wss.on('connection', (ws) => {
         room = rooms.get(String(msg.room).toUpperCase().trim());
         if (!room) return send(ws, { type: 'error', message: 'No game with that code.' });
       } else {
-        room = createRoom(Number(msg.players) || DEFAULT_HUMANS);
+        room = createRoom(Number(msg.players) || DEFAULT_HUMANS, msg.difficulty);
       }
 
       // Rejoin the seat this player already holds, otherwise take a free one.

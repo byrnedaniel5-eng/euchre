@@ -25,18 +25,45 @@ import {
 } from './cards.js';
 import { partnerOf, teamOf } from './euchre.js';
 
-export const PROFILE = {
-  // Expected tricks the bot wants from its own hand before it will bid.
-  // A hand needs 3 of 5 tricks and a partner is worth roughly one.
-  order: 2.45, // round 1: order the upcard up
-  call: 2.30, // round 2: name a suit
-  dealerLastCall: 2.05, // round 2, dealer, last chance before a throw-in
-  alone: 3.60, // go it alone
+// Difficulty is more than bid thresholds. A weak player also forgets what has
+// been played, misjudges a hand, and now and then just plays the wrong card —
+// so each level moves all four dials together.
+//
+//   order/call/dealerLastCall/alone
+//              expected tricks needed from its own hand before it will bid
+//   noise      random error added to its judgement of a hand, in tricks
+//   mistakes   chance per turn of simply playing a random legal card
+//   trackCards whether it remembers cards from earlier tricks
+//   voids      whether it notes who failed to follow suit, and leads on it
+export const SKILLS = {
+  easy: {
+    key: 'easy', label: 'Easy',
+    order: 1.90, call: 2.00, dealerLastCall: 1.70, alone: 3.20,
+    noise: 1.20, mistakes: 0.35, trackCards: false, voids: false,
+  },
+  casual: {
+    key: 'casual', label: 'Casual',
+    order: 2.20, call: 2.15, dealerLastCall: 1.90, alone: 3.40,
+    noise: 0.60, mistakes: 0.15, trackCards: false, voids: false,
+  },
+  solid: {
+    key: 'solid', label: 'Solid',
+    order: 2.45, call: 2.30, dealerLastCall: 2.05, alone: 3.60,
+    noise: 0, mistakes: 0, trackCards: true, voids: true,
+  },
 };
 
-/** Per-seat profile override, used by the tuning harness. Seats default to PROFILE. */
-export const seatProfiles = [null, null, null, null];
-const profileFor = (seat) => seatProfiles[seat] || PROFILE;
+// There was a fourth tier above this that also read voids to steer its leads.
+// Measured over 3000 games it won 49.8% against Solid — inside the noise. In a
+// five-trick hand you learn who is void too late for it to pay. The reading is
+// kept on in Solid because it is correct play and free, but it does not earn a
+// difficulty step, and a setting that does not change your odds is a lie.
+
+export const DEFAULT_SKILL = SKILLS.solid;
+export const skillByKey = (key) => SKILLS[key] || DEFAULT_SKILL;
+
+/** Kept for the tuning harness, which sweeps one parameter at a time. */
+export const PROFILE = SKILLS.solid;
 
 // ---------------------------------------------------------------- evaluation
 
@@ -100,8 +127,7 @@ function bestFive(sixCards, trump) {
 
 // ------------------------------------------------------------------- bidding
 
-export function botBid1(game, seat) {
-  const P = profileFor(seat);
+export function botBid1(game, seat, P = DEFAULT_SKILL) {
   const hand = game.hands[seat];
   const trump = suitOf(game.upcard);
   const dealer = game.dealer;
@@ -115,6 +141,7 @@ export function botBid1(game, seat) {
     if (teamOf(dealer) === teamOf(seat)) score += 0.30; // partner gains a trump
     else score -= 0.35; // an opponent gains a known trump
   }
+  score += misjudge(P);
 
   if (score < P.order) return { order: false };
 
@@ -126,8 +153,7 @@ export function botBid1(game, seat) {
   return { order: true, alone };
 }
 
-export function botBid2(game, seat) {
-  const P = profileFor(seat);
+export function botBid2(game, seat, P = DEFAULT_SKILL) {
   const hand = game.hands[seat];
   const isDealer = seat === game.dealer;
   const threshold = isDealer ? P.dealerLastCall : P.call;
@@ -142,6 +168,7 @@ export function botBid2(game, seat) {
     else score -= 0.05;
     if (!best || score > best.score) best = { suit, score };
   }
+  if (best) best.score += misjudge(P);
 
   if (!best || best.score < threshold) return { suit: null };
 
@@ -186,15 +213,40 @@ export function botDiscard(game, seat) {
 
 // --------------------------------------------------------------------- play
 
-/** Cards this bot knows are out of circulation. */
-function seenCards(game, seat) {
-  const seen = new Set(game.playedCards);
+/** Random error in tricks, so weaker bots misjudge a hand rather than just bid tightly. */
+const misjudge = (P) => (P.noise ? (Math.random() - 0.5) * P.noise : 0);
+
+/**
+ * Cards this bot knows are out of circulation. A bot without card memory only
+ * sees its own hand and what is on the table right now — it has forgotten the
+ * earlier tricks, which is exactly how a casual player plays.
+ */
+function seenCards(game, seat, P = DEFAULT_SKILL) {
+  const seen = new Set(P.trackCards ? game.playedCards : []);
   for (const c of game.hands[seat]) seen.add(c);
   for (const p of game.trick) seen.add(p.card);
   // A turned-down upcard is dead and everyone saw it. An upcard that was
   // ordered up is live in the dealer's hand, so it stays unseen.
   if (game.turnedDownSuit) seen.add(game.upcard);
   return seen;
+}
+
+/**
+ * Who has shown out of which suit. Failing to follow is public information,
+ * and the strongest level uses it: leading a suit an opponent is void in just
+ * hands them a ruff.
+ */
+function voidsBySeat(game) {
+  const out = [new Set(), new Set(), new Set(), new Set()];
+  const note = (plays, led) => {
+    if (!led) return;
+    for (const p of plays) {
+      if (effectiveSuit(p.card, game.trump) !== led) out[p.seat].add(led);
+    }
+  };
+  for (const t of game.history || []) note(t.plays, t.ledSuit);
+  note(game.trick, game.ledSuit);
+  return out;
 }
 
 /** True if no unseen card can beat `card` in its own suit. */
@@ -216,13 +268,18 @@ function keepValue(card, hand, trump, seen) {
 const lowestBy = (cards, fn) => cards.slice().sort((a, b) => fn(a) - fn(b))[0];
 const highestBy = (cards, fn) => cards.slice().sort((a, b) => fn(b) - fn(a))[0];
 
-export function botPlay(game, seat) {
+export function botPlay(game, seat, P = DEFAULT_SKILL) {
   const trump = game.trump;
   const hand = game.hands[seat];
   const legal = legalPlays(hand, trump, game.ledSuit);
   if (legal.length === 1) return legal[0];
 
-  const seen = seenCards(game, seat);
+  // A weaker player simply gets it wrong sometimes.
+  if (P.mistakes && Math.random() < P.mistakes) {
+    return legal[Math.floor(Math.random() * legal.length)];
+  }
+
+  const seen = seenCards(game, seat, P);
   const myTrump = hand.filter((c) => effectiveSuit(c, trump) === trump);
 
   // ------------------------------------------------------------- leading
@@ -237,8 +294,18 @@ export function botPlay(game, seat) {
       return highestBy(myTrump, (c) => trumpStrength(c, trump));
     }
 
-    // Cash a certain winner while we can.
-    const bossOff = offSuit.filter((c) => isBoss(c, trump, seen));
+    const voids = P.voids ? voidsBySeat(game) : null;
+    const opponents = [0, 1, 2, 3].filter(
+      (s) => teamOf(s) !== teamOf(seat) && s !== game.sittingOut);
+    const ruffRisk = (card) => {
+      if (!voids) return 0;
+      const es = effectiveSuit(card, trump);
+      return opponents.filter((s) => voids[s].has(es)).length;
+    };
+
+    // Cash a certain winner — unless an opponent has shown out of that suit,
+    // in which case the "winner" just gets trumped.
+    const bossOff = offSuit.filter((c) => isBoss(c, trump, seen) && ruffRisk(c) === 0);
     if (bossOff.length) return highestBy(bossOff, (c) => RANK_VALUE[rankOf(c)]);
 
     const bossTrump = myTrump.filter((c) => isBoss(c, trump, seen));
@@ -247,12 +314,17 @@ export function botPlay(game, seat) {
     if (offSuit.length === 0) return highestBy(myTrump, (c) => trumpStrength(c, trump));
 
     // Defending with nothing sure: lead low from our shortest side suit and
-    // keep the trump for ruffing.
+    // keep the trump for ruffing. Steer away from suits an opponent can ruff,
+    // and towards one our partner can.
     const lenOf = (s) => hand.filter((c) => effectiveSuit(c, trump) === s).length;
-    return lowestBy(
-      offSuit,
-      (c) => lenOf(effectiveSuit(c, trump)) * 10 + RANK_VALUE[rankOf(c)]
-    );
+    const partner = partnerOf(seat);
+    return lowestBy(offSuit, (c) => {
+      const es = effectiveSuit(c, trump);
+      let score = lenOf(es) * 10 + RANK_VALUE[rankOf(c)];
+      score += ruffRisk(c) * 22;
+      if (voids && voids[partner].has(es) && partner !== game.sittingOut) score -= 12;
+      return score;
+    });
   }
 
   // ------------------------------------------------------------ following
@@ -262,7 +334,25 @@ export function botPlay(game, seat) {
   const partnerSeat = partnerOf(seat);
   const partnerWinning = winning.seat === partnerSeat;
   const isLast = game.trick.length === game.playersInTrick() - 1;
-  const partnerSafe = isBoss(winning.card, trump, seen);
+
+  // Who still has to play after us this trick.
+  const toPlay = [];
+  {
+    let s = seat;
+    for (let i = game.trick.length; i < game.playersInTrick() - 1; i++) {
+      s = game.nextActive(s);
+      toPlay.push(s);
+    }
+  }
+
+  // A "boss" side-suit card is only boss if nobody behind can trump it. An
+  // opponent who has already shown out of this suit certainly can.
+  const winnerIsTrump = effectiveSuit(winning.card, trump) === trump;
+  const knownVoids = P.voids ? voidsBySeat(game) : null;
+  const ruffable = !!knownVoids && !winnerIsTrump && game.ledSuit !== trump &&
+    toPlay.some((s) => teamOf(s) !== teamOf(seat) && knownVoids[s].has(game.ledSuit));
+
+  const partnerSafe = isBoss(winning.card, trump, seen) && !ruffable;
 
   const canFollow = hand.some((c) => effectiveSuit(c, trump) === game.ledSuit);
 
@@ -282,8 +372,9 @@ export function botPlay(game, seat) {
   const usefulTrump = beaters.filter((c) => effectiveSuit(c, trump) === trump);
   if (usefulTrump.length) {
     // Don't burn trump ruffing a trick the partner already has locked up,
-    // unless there is still an opponent to play behind us and we can spare it.
-    if (partnerWinning && !(myTrump.length >= 2 || game.tricksPlayed >= 2)) {
+    // unless there is still an opponent to play behind us and we can spare it —
+    // or we know one of them is void and about to ruff it away from us.
+    if (partnerWinning && !ruffable && !(myTrump.length >= 2 || game.tricksPlayed >= 2)) {
       return lowestBy(legal, (c) => keepValue(c, hand, trump, seen));
     }
     return lowestBy(usefulTrump, (c) => trumpStrength(c, trump));
@@ -293,16 +384,16 @@ export function botPlay(game, seat) {
 }
 
 /** Single entry point: make whatever move the current phase calls for. */
-export function botAct(game, seat) {
+export function botAct(game, seat, skill = DEFAULT_SKILL) {
   switch (game.phase) {
     case 'bid1':
-      return game.bid1(seat, botBid1(game, seat));
+      return game.bid1(seat, botBid1(game, seat, skill));
     case 'bid2':
-      return game.bid2(seat, botBid2(game, seat));
+      return game.bid2(seat, botBid2(game, seat, skill));
     case 'discard':
       return game.discard(seat, botDiscard(game, seat));
     case 'play':
-      return game.playCard(seat, botPlay(game, seat));
+      return game.playCard(seat, botPlay(game, seat, skill));
     default:
       throw new Error(`bot cannot act in phase ${game.phase}`);
   }

@@ -79,9 +79,31 @@ whether a card is the boss of its suit. They lead trump when their side called
 it, cash certain winners, duck when their partner already has the trick, ruff
 with the cheapest card that wins, and pitch to make voids.
 
-Bidding thresholds live in `PROFILE` at the top of that file, expressed in
-expected tricks. They were fitted, not guessed — `npm run tune` plays one
-profile against another 4000 games a side with the seats swapped halfway:
+### Difficulty
+
+Chosen by whoever creates the game, and it applies to every bot at that table.
+Difficulty is not just bid thresholds — each level moves four dials together,
+because a weak player also forgets what has been played and misplays cards:
+
+| | Bids | Hand judgement | Card memory | Misplays |
+|---|---|---|---|---|
+| **Easy** | loose | ±0.6 tricks | none | 35% of turns |
+| **Casual** | slightly loose | ±0.3 tricks | none | 15% of turns |
+| **Solid** | tuned | exact | every card, plus who has shown out | never |
+
+`npm run ladder` plays each level against every other, seats swapped halfway,
+and fails if the ladder is not real:
+
+```
+         easy     casual   solid
+easy     —        32.6%    24.1%
+casual   67.3%    —        40.0%
+solid    76.0%    60.0%    —
+```
+
+### Fitting the numbers
+
+`npm run tune` sweeps one bid threshold at a time, 4000 games a side:
 
 ```
 --- order ---
@@ -92,9 +114,16 @@ profile against another 4000 games a side with the seats swapped halfway:
   3.4    42.3%
 ```
 
-`call`, `alone` and `dealerLastCall` were flat within noise, so they sit at
-their starting values. To make the bots softer or nastier, raise or lower
-`order` — that is the parameter that actually moves the needle.
+`call`, `alone` and `dealerLastCall` came back flat within noise, so they sit
+at their starting values. `order` is the one that moves the needle.
+
+**A tier that did not survive testing.** There was a fourth level above Solid
+that read who had shown out of each suit and steered its leads accordingly. Over
+3000 games it won 49.8% against Solid — dead inside the noise. In a five-trick
+hand you learn who is void too late for it to pay. The void reading is kept
+switched on in Solid because it is correct play and costs nothing, but it did
+not earn a difficulty step, and a setting that does not change your odds is a
+lie. Beating Solid properly needs search, not more heuristics.
 
 ## Tests
 

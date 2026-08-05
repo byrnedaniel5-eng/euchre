@@ -75,6 +75,9 @@ export class EuchreGame {
     this.lastTrick = null;
     this.trickWinner = null;
     this.playedCards = [];
+    // Completed tricks this hand. Who failed to follow suit is public
+    // information, and the strongest bots read it.
+    this.history = [];
 
     this.passes = 0;
     this.phase = 'bid1';
@@ -252,6 +255,7 @@ export class EuchreGame {
     this.tricksWon[winner] += 1;
     this.tricksPlayed += 1;
     this.lastTrick = { plays: this.trick, winner, ledSuit: this.ledSuit };
+    this.history.push(this.lastTrick);
     this.pushLog(`${this.names[winner]} takes trick ${this.tricksPlayed}`);
     this.trick = [];
     this.ledSuit = null;

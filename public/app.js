@@ -116,11 +116,26 @@
     4: 'Four people, no bots.',
   };
 
-  function renderPlayerChoice() {
+  let skill = store.get('skill', 'solid') || 'solid';
+
+  const SKILL_HINTS = {
+    easy: 'Bids loosely, forgets what has been played, and misplays often.',
+    casual: 'Plays a reasonable game with the occasional slip.',
+    solid: 'Counts trump, tracks every card played, and punishes loose calls.',
+  };
+
+  function renderSetupChoices() {
     for (const b of $('opt-players').querySelectorAll('button')) {
       b.classList.toggle('on', Number(b.dataset.v) === playerCount);
     }
     $('players-hint').textContent = PLAYER_HINTS[playerCount];
+
+    for (const b of $('opt-skill').querySelectorAll('button')) {
+      b.classList.toggle('on', b.dataset.v === skill);
+    }
+    $('skill-hint').textContent = SKILL_HINTS[skill];
+    // Four people means no bots, so there is nothing to set a difficulty for.
+    $('difficulty-row').hidden = playerCount === 4;
   }
 
   $('opt-players').onclick = (e) => {
@@ -128,15 +143,27 @@
     if (!v) return;
     playerCount = v;
     store.set('playerCount', v);
-    renderPlayerChoice();
+    renderSetupChoices();
   };
-  renderPlayerChoice();
+  $('opt-skill').onclick = (e) => {
+    const v = e.target.closest('button')?.dataset.v;
+    if (!v) return;
+    skill = v;
+    store.set('skill', v);
+    renderSetupChoices();
+  };
+  renderSetupChoices();
 
   function doJoin(room) {
     const name = $('name').value.trim() || 'Player';
     store.set('name', name);
     pendingJoin = { room: room || null, name };
-    if (!room) pendingJoin.players = playerCount;
+    if (!room) {
+      // Table size and bot difficulty belong to the room, so only the person
+      // creating it gets a say; everyone else inherits what they join.
+      pendingJoin.players = playerCount;
+      pendingJoin.difficulty = skill;
+    }
     $('join-error').hidden = true;
     if (ws && ws.readyState === WebSocket.OPEN) send({ type: 'join', playerId, ...pendingJoin });
     else connect();
@@ -553,11 +580,14 @@
   function renderLog() {
     $('drawer-room').textContent = state.room || roomCode || '';
     const others = otherHumans();
-    $('drawer-conn').textContent = others.length === 0
+    const who = others.length === 0
       ? 'solo against 3 bots'
       : others
           .map((s) => `${state.names[s]} ${state.connected?.[s] === false ? 'offline' : 'online'}`)
           .join(' · ');
+    const bots = 4 - (state.humans ?? 2);
+    $('drawer-conn').textContent =
+      who + (bots > 0 && state.difficulty ? ` · bots: ${state.difficulty}` : '');
 
     const log = $('log');
     log.innerHTML = (state.log || []).map((l) => `<div>${escapeHtml(l)}</div>`).join('');

@@ -14,7 +14,8 @@
     "test:tags": "node server/tagcheck.js",
     "test:cards": "node server/cardshots.js",
     "smoke": "node server/smoke-remote.js",
-    "tune": "node server/tune.js"
+    "tune": "node server/tune.js",
+    "ladder": "node server/ladder.js"
   },
   "dependencies": {
     "express": "^4.19.2",

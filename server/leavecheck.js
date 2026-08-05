@@ -178,7 +178,35 @@ try {
   const conn = await evaluate(`document.getElementById('drawer-conn').textContent`);
   check(/solo/i.test(conn), `the menu says it is a solo game ("${conn}")`);
 
-  console.log('\n8. a three-person table waits for two more');
+  console.log('\n8. bot difficulty carries into the game');
+  await evaluate(`document.getElementById('leave-game').click(); true`);
+  await until(onJoinScreen);
+  for (const level of ['easy', 'casual', 'solid']) {
+    await evaluate(`document.querySelector('#opt-skill button[data-v="${level}"]').click(); true`);
+    const on = await evaluate(`document.querySelector('#opt-skill button.on').dataset.v`);
+    check(on === level, `${level} selectable`);
+  }
+  await evaluate(`document.querySelector('#opt-skill button[data-v="easy"]').click();
+                  document.querySelector('#opt-players button[data-v="1"]').click();
+                  document.getElementById('create').click(); true`);
+  check(await until(onGame), 'solo easy game started');
+  await evaluate(`window.confirm = () => true;
+                  document.getElementById('menu-btn').click(); true`);
+  await sleep(200);
+  const meta = await evaluate(`document.getElementById('drawer-conn').textContent`);
+  check(/easy/i.test(meta), `the game reports the chosen difficulty ("${meta}")`);
+
+  console.log('\n9. four people hides the difficulty setting');
+  await evaluate(`document.getElementById('leave-game').click(); true`);
+  await until(onJoinScreen);
+  await evaluate(`document.querySelector('#opt-players button[data-v="4"]').click(); true`);
+  check(await evaluate(`document.getElementById('difficulty-row').hidden`),
+    'no bots, so no difficulty to choose');
+  await evaluate(`document.querySelector('#opt-players button[data-v="2"]').click(); true`);
+  check(!(await evaluate(`document.getElementById('difficulty-row').hidden`)),
+    'it comes back when bots are in play');
+
+  console.log('\n10. a three-person table waits for two more');
   await evaluate(`document.getElementById('leave-game').click(); true`);
   await until(onJoinScreen);
   await evaluate(`document.querySelector('#opt-players button[data-v="3"]').click();
