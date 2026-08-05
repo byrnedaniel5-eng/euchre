@@ -105,6 +105,9 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
 - `server/uicheck.js` — drives headless Chrome at 390×844 as player one against
   a scripted player two, screenshotting each stage and failing on console
   errors or horizontal overflow.
+- `server/leavecheck.js` — drives a browser through leaving a room from the
+  lobby and from mid-hand, and asserts a refresh afterwards stays out. Rejoining
+  is deliberately sticky, so the way out needs its own test.
 - `server/cardshots.js` — renders the sample hand in all six card-style and
   suit-colour combinations, at both in-hand and on-table size, screenshots
   each, and asserts the styles are actually distinct and that four-colour mode
@@ -162,6 +165,12 @@ and works at every size.
 - Reconnecting is automatic and keyed to a UUID in `localStorage`, so a refresh,
   a lock screen, or a walk out of wifi range all resume the same seat. The seat
   is never given away, so nobody can take it while you're gone.
+- Because rejoining is that sticky, there has to be a deliberate way out:
+  **Cancel** on the lobby and **Leave game** in the ⋯ menu. Leaving clears the
+  stored room, the URL and the socket, and gives the seat up server-side — the
+  one case where a seat is released rather than held. Whoever is left keeps the
+  same code so a replacement can join. Without this, every refresh drops you
+  back into the room you were trying to escape.
 - Rooms are reaped six hours after the last person leaves.
 - **The next hand is dealt only when both players have pressed "Next hand."**
   There is no timer on the result screen, so neither of you gets rushed past

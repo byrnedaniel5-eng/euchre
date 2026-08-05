@@ -313,6 +313,30 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    // Leaving is different from dropping. A dropped socket keeps the seat so
+    // a locked phone can come back to it; saying "leave" gives the seat up.
+    if (msg.type === 'leave') {
+      const who = room.seats[seat]?.name || 'A player';
+      for (const s of room.seats[seat]?.sockets || []) if (s !== ws) s.close();
+      room.seats[seat] = null;
+      room.ready.delete(seat);
+      clearTimeout(room.timer);
+      room.timer = null;
+
+      if (!HUMAN_SEATS.some((s) => room.seats[s])) {
+        rooms.delete(room.code);
+      } else {
+        // Whoever is left goes back to the lobby holding the same code, so a
+        // replacement can join without starting over.
+        room.game = null;
+        broadcastChat(room, { from: 'Table', seat: -1, text: `${who} left.`, ts: Date.now() });
+        broadcast(room);
+      }
+      room = null;
+      seat = null;
+      return;
+    }
+
     if (msg.type === 'chat') {
       const text = String(msg.text || '').trim().slice(0, 200);
       if (text) {

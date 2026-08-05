@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node server/selftest.js && node server/e2e.js",
+    "test": "node server/selftest.js && node server/e2e.js && node server/leavecheck.js",
     "test:rules": "node server/selftest.js",
     "test:e2e": "node server/e2e.js",
     "test:ui": "node server/uicheck.js",

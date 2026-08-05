@@ -64,8 +64,19 @@
         addChat(msg.entry);
         if ($('drawer').hidden) flashMenu();
       } else if (msg.type === 'error') {
-        if (!state) showJoinError(msg.message);
-        else toast(msg.message);
+        if (state) {
+          toast(msg.message);
+        } else {
+          // The join itself failed — usually a stored room the server no
+          // longer has. Forget it, or every refresh retries the same dead code.
+          store.set('lastRoom', null);
+          pendingJoin = null;
+          history.replaceState(null, '', location.pathname);
+          $('lobby').hidden = true;
+          $('game').hidden = true;
+          $('join').hidden = false;
+          showJoinError(msg.message);
+        }
       }
     };
 
@@ -113,6 +124,36 @@
   $('code').oninput = (e) => { e.target.value = e.target.value.toUpperCase(); };
   $('code').onkeydown = (e) => { if (e.key === 'Enter') $('join-btn').click(); };
   $('name').onkeydown = (e) => { if (e.key === 'Enter') $('create').click(); };
+
+  /**
+   * Get out of a room for good. Rejoining is deliberately sticky — a refresh
+   * or a lock screen must land you back in your seat — so leaving has to
+   * clear every trace of it: the stored room, the URL, and the socket.
+   */
+  function leaveGame() {
+    send({ type: 'leave' });
+    pendingJoin = null; // must precede close(), or onclose reconnects us
+    if (ws) ws.close();
+    ws = null;
+    state = null;
+    mySeat = null;
+    roomCode = null;
+    store.set('lastRoom', null);
+    history.replaceState(null, '', location.pathname);
+    $('code').value = '';
+    $('chat').innerHTML = '';
+    for (const id of ['drawer', 'overlay', 'game', 'lobby']) $(id).hidden = true;
+    $('conn-banner').hidden = true;
+    $('join-error').hidden = true;
+    $('join').hidden = false;
+  }
+
+  $('lobby-cancel').onclick = leaveGame;
+  $('leave-game').onclick = () => {
+    const mid = state && !['gameOver', 'lobby'].includes(state.phase);
+    if (mid && !confirm('Leave this game? It will end for both of you.')) return;
+    leaveGame();
+  };
 
   $('copy-link').onclick = async () => {
     const url = `${location.origin}/?room=${roomCode}`;

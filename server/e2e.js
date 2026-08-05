@@ -259,7 +259,33 @@ try {
   await waitFor(() => danAgain.state.phase === 'gameOver', 'resumed game to finish', 120000);
   assert(Math.max(...danAgain.state.score) >= 10, 'resumed game completed normally');
 
-  await Promise.all([danAgain.close(), gf.close(), rando.close().catch(() => {})]);
+  console.log('\n11. leaving gives the seat up');
+  danAgain.autoPlay = gf.autoPlay = false;
+  const sharedRoom = danAgain.room;
+  gf.send({ type: 'leave' });
+  await waitFor(() => danAgain.state.phase === 'lobby', 'remaining player back to the lobby');
+  assert(danAgain.state.phase === 'lobby', 'the player left behind returns to the lobby');
+  assert(danAgain.state.room === sharedRoom, 'they keep the same code for a replacement');
+
+  const newcomer = new Client('Alex', 'pid-alex');
+  await newcomer.connect(sharedRoom);
+  assert(newcomer.seat === 1, 'the vacated seat is free for someone new');
+
+  console.log('\n12. an abandoned room is cleaned up');
+  danAgain.send({ type: 'leave' });
+  newcomer.send({ type: 'leave' });
+  await sleep(300);
+  const ghost = new Client('Ghost', 'pid-ghost');
+  let joinError = null;
+  await ghost.connect(sharedRoom).catch((e) => { joinError = e.message; });
+  await sleep(200);
+  const refused = joinError || ghost.errors.join(' ');
+  assert(/no game with that code/i.test(refused), `the empty room is gone (${refused})`);
+
+  await Promise.all([
+    danAgain.close(), gf.close(), newcomer.close(),
+    rando.close().catch(() => {}), ghost.close().catch(() => {}),
+  ]);
 } catch (err) {
   failures++;
   console.error('\nFAIL:', err.message);

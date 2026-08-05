@@ -117,6 +117,13 @@ button.primary {
   color: #06180f;
 }
 button.ghost { background: rgba(255, 255, 255, 0.06); }
+button.wide { width: 100%; margin-top: 8px; }
+button.leave {
+  margin-bottom: 10px;
+  color: #f0a9a9;
+  border-color: rgba(217, 83, 79, 0.4);
+  background: rgba(217, 83, 79, 0.12);
+}
 
 .divider {
   position: relative;
