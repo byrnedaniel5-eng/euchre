@@ -24,6 +24,7 @@ class Client {
   constructor(name, playerId) {
     Object.assign(this, { name, playerId, state: null, seat: null, errors: [], moves: 0 });
     this.autoPlay = false;
+    this.autoNext = true;
   }
   connect(room) {
     return new Promise((resolve, reject) => {
@@ -45,7 +46,7 @@ class Client {
     const act = (action) => { this.moves++; this.ws.send(JSON.stringify({ type: 'action', action })); };
     if (s?.phase === 'handOver') {
       // Both players press; only once per hand or we loop with the server.
-      if (this.readyForHand !== s.handNumber) {
+      if (this.autoNext && this.readyForHand !== s.handNumber) {
         this.readyForHand = s.handNumber;
         act({ kind: 'nextHand' });
       }
@@ -84,9 +85,34 @@ try {
   await waitFor(() => a.state && a.state.phase !== 'lobby', 'game start');
   check(a.state.you.hand.length === 5, 'cards dealt over the wire');
 
-  console.log('\n3. play a full game to ten');
-  console.log('   (real timings: trick pauses and hand reviews, so this takes minutes)');
+  console.log('\n3. the next hand waits for both players');
   a.autoPlay = b.autoPlay = true;
+  a.autoNext = b.autoNext = false;
+  a.think(); b.think();
+  await waitFor(() => a.state.phase === 'handOver', 'first hand to be scored', 120000);
+  const handNo = a.state.handNumber;
+  check(Array.isArray(a.state.ready), 'server reports per-player readiness');
+  a.ws.send(JSON.stringify({ type: 'action', action: { kind: 'nextHand' } }));
+  await sleep(1500);
+  check(a.state.phase === 'handOver' && a.state.handNumber === handNo,
+    'one player pressing does NOT deal the next hand');
+  check((b.state.ready || []).includes(0), 'the other player sees who is ready');
+  b.ws.send(JSON.stringify({ type: 'action', action: { kind: 'nextHand' } }));
+  await waitFor(() => a.state.handNumber === handNo + 1, 'next hand once both pressed', 20000);
+  check(true, 'both pressing deals the next hand');
+
+  if (process.env.SMOKE_QUICK === '1') {
+    console.log('\n(quick mode: skipping the full game)');
+    a.autoNext = b.autoNext = true;
+    console.log(`\n${((Date.now() - t0) / 1000).toFixed(1)}s elapsed`);
+    console.log(failures === 0 ? 'LIVE SMOKE PASSED' : `${failures} FAILURE(S)`);
+    a.ws.close(); b.ws.close();
+    process.exit(failures === 0 ? 0 : 1);
+  }
+
+  console.log('\n4. play a full game to ten');
+  a.autoNext = b.autoNext = true;
+  console.log('   (real trick pauses, so this takes minutes)');
   a.think(); b.think();
 
   // Report progress, and fail fast if the game stops advancing rather than
@@ -117,7 +143,7 @@ try {
   check(a.errors.length + b.errors.length === 0,
     `no rule errors (${a.errors.concat(b.errors).slice(0, 2).join('; ')})`);
 
-  console.log('\n4. reconnect against the live host');
+  console.log('\n5. reconnect against the live host');
   const handBefore = JSON.stringify(a.state.you.hand);
   a.ws.close();
   await sleep(500);
