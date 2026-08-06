@@ -65,7 +65,7 @@ const until = async (expr, ms = 15000) => {
   }
   return last;
 };
-const onJoinScreen = `!document.getElementById('join').hidden`;
+const onJoinScreen = `!document.getElementById('home').hidden`;
 const onLobby = `!document.getElementById('lobby').hidden`;
 const onGame = `!document.getElementById('game-euchre').hidden`;
 
@@ -100,24 +100,26 @@ try {
 
   console.log('\n1. start a game, then back out of the lobby');
   await go(`http://127.0.0.1:${PORT}/`);
-  check(await evaluate(onJoinScreen), 'starts on the join screen');
+  check(await evaluate(onJoinScreen), 'starts on the landing screen');
   await evaluate(`document.getElementById('name').value = 'Dan';
+                  document.querySelector('[data-game="euchre"]').click();
                   document.getElementById('create').click(); true`);
   check(await until(onLobby), 'reached the waiting-for-opponent lobby');
   const code = await evaluate(`document.getElementById('room-code').textContent`);
   check(await evaluate(`location.search.includes('room=')`), 'the URL now carries the room');
 
   await evaluate(`document.getElementById('lobby-cancel').click(); true`);
-  check(await until(onJoinScreen), 'Cancel returns to the join screen');
+  check(await until(onJoinScreen), 'Cancel returns to the landing screen');
   check(await evaluate(`!location.search.includes('room=')`), 'the room is cleared from the URL');
 
   console.log('\n2. a refresh after leaving stays out');
   await go(`http://127.0.0.1:${PORT}/`);
-  check(await evaluate(onJoinScreen), 'refresh lands on the join screen, not back in a room');
+  check(await evaluate(onJoinScreen), 'refresh lands on the landing screen, not back in a room');
   check(!(await evaluate(onLobby)), 'not dragged back to the lobby');
 
   console.log('\n3. mid-game, leaving works too');
   await evaluate(`document.getElementById('name').value = 'Dan';
+                  document.querySelector('[data-game="euchre"]').click();
                   document.getElementById('create').click(); true`);
   check(await until(onLobby), 'second game created');
   const code2 = await evaluate(`document.getElementById('room-code').textContent`);
@@ -133,18 +135,18 @@ try {
   await evaluate(`document.querySelector('#game-euchre .menu-btn').click(); true`);
   await sleep(200);
   await evaluate(`document.getElementById('leave-game').click(); true`);
-  check(await until(onJoinScreen), 'Leave game returns to the join screen mid-hand');
+  check(await until(onJoinScreen), 'Leave game returns to the landing screen mid-hand');
   check(await evaluate(`document.getElementById('drawer').hidden`), 'the menu closed behind it');
 
   console.log('\n4. and that refresh stays out too');
   await go(`http://127.0.0.1:${PORT}/`);
-  check(await evaluate(onJoinScreen), 'still on the join screen after a refresh');
+  check(await evaluate(onJoinScreen), 'still on the landing screen after a refresh');
 
   console.log('\n5. a dead room code does not trap you in a retry loop');
   await evaluate(`localStorage.setItem('euchre.lastRoom',
     JSON.stringify({ code: 'ZZZZ', at: Date.now() })); true`);
   await go(`http://127.0.0.1:${PORT}/`);
-  check(await until(onJoinScreen), 'a stale stored room drops you on the join screen');
+  check(await until(onJoinScreen), 'a stale stored room drops you on the landing screen');
   check(await until(`!document.getElementById('join-error').hidden`),
     'and says why');
   const cleared = await evaluate(`localStorage.getItem('euchre.lastRoom')`);
@@ -165,6 +167,7 @@ try {
   console.log('\n7. a solo game starts with no lobby at all');
   await evaluate(`document.querySelector('#opt-players button[data-v="1"]').click();
                   document.getElementById('name').value = 'Dan';
+                  document.querySelector('[data-game="euchre"]').click();
                   document.getElementById('create').click(); true`);
   check(await until(onGame), 'one player goes straight to the table, skipping the lobby');
   check(!(await evaluate(onLobby)), 'no waiting screen for a solo game');

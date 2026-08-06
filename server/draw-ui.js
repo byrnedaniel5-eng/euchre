@@ -139,8 +139,12 @@ try {
   console.log('\n2. start a drawing game');
   await evaluate(`document.getElementById('name').value = 'Ann';
                   document.querySelector('[data-game="draw"]').click(); true`);
-  check(await until(`document.querySelector('[data-game="draw"]').classList.contains('on')`),
-    'the drawing game is selected');
+  check(await until(`!document.getElementById('setup').hidden`),
+    'picking a game opens its setup screen');
+  check(await evaluate(`document.getElementById('setup-name').textContent`) === 'Draw It',
+    'the setup screen names the game');
+  check(await evaluate(`document.body.dataset.theme`) === 'draw',
+    'and switches to the drawing game look');
   check(await evaluate(`document.getElementById('game-options').textContent.includes('Turns')`),
     'its options come from the server');
   await shot('draw-2-setup');

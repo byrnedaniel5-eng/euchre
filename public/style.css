@@ -866,3 +866,132 @@ button.leave {
 #draw-worth { font-size: 9px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted); }
 #draw-worth:empty { display: none; }
 .clock.urgent #draw-worth { color: #ffb3b3; }
+
+/* =================================================================== themes
+
+   Each screen sets body[data-theme]. The hub is a neutral slate so it does not
+   look like either game; euchre keeps its card-room green; the drawing game is
+   an ink-and-violet studio. Only the variables change — every rule below is
+   written once against them. */
+
+body[data-theme="home"] {
+  --felt-1: #0e1017;
+  --felt-2: #1c2233;
+  --panel: #171d2b;
+  --ink: #eef1f8;
+  --muted: #94a0bd;
+  --gold: #f2b544;
+  --accent: #6f86ff;
+  background:
+    radial-gradient(1100px 620px at 50% -10%, rgba(111, 134, 255, 0.18), transparent 70%),
+    linear-gradient(180deg, #161b28, #0e1017 65%);
+}
+
+body[data-theme="euchre"] {
+  --panel: #17301f;
+  background: radial-gradient(ellipse at 50% 30%, var(--felt-2), var(--felt-1) 70%);
+}
+
+body[data-theme="draw"] {
+  --felt-1: #150e26;
+  --felt-2: #2d1a4f;
+  --panel: #241640;
+  --ink: #f5effc;
+  --muted: #b0a1cb;
+  --gold: #ffb03a;
+  --accent: #ff5f8f;
+  background:
+    radial-gradient(760px 520px at 15% 0%, rgba(255, 95, 143, 0.20), transparent 65%),
+    radial-gradient(820px 560px at 85% 100%, rgba(120, 90, 255, 0.24), transparent 65%),
+    linear-gradient(180deg, #241640, #150e26 70%);
+}
+
+/* Panels follow the theme rather than being hard-coded green. */
+.divider span { background: var(--panel); }
+.overlay-card { background: var(--panel); }
+.drawer { background: var(--panel); }
+button.primary { color: #06180f; }
+body[data-theme="home"] button.primary,
+body[data-theme="draw"] button.primary {
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 72%, #000));
+  color: #fff;
+}
+.seg button.on,
+.game-card.on {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-color: var(--accent);
+}
+input:focus { border-color: var(--accent); }
+
+/* ================================================================== landing */
+
+#home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.landing {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 4px 24px;
+  text-align: center;
+}
+.brand { margin-bottom: 22px; }
+.brand h1 {
+  margin: 0 0 6px;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: linear-gradient(120deg, var(--gold), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.game-list { gap: 10px; }
+.game-card {
+  position: relative;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+.game-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--gold);
+  opacity: 0.85;
+}
+.game-card[data-for="euchre"]::before { background: #56bd8a; }
+.game-card[data-for="draw"]::before { background: #ff5f8f; }
+.game-card:active { background: rgba(255, 255, 255, 0.1); }
+.gc-icon { font-size: 30px; }
+.gc-text b { font-size: 17px; }
+.gc-go { margin-left: auto; font-size: 24px; color: var(--muted); }
+
+/* ==================================================================== setup */
+
+#setup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+.back-btn {
+  padding: 8px 12px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  float: left;
+  margin: -8px 0 0 -8px;
+}
+.setup-head { display: flex; align-items: center; justify-content: center; gap: 10px; clear: both; }
+.setup-head h2 { margin: 0; }
+.setup-icon { font-size: 30px; line-height: 1; }

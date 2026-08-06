@@ -97,8 +97,9 @@ try {
 
   // Show just the hand strip against the felt, with a known set of cards.
   await evaluate(`
-    document.getElementById('join').hidden = true;
+    document.getElementById('home').hidden = true;
     document.getElementById('game-euchre').hidden = false;
+    document.body.dataset.theme = 'euchre';
     document.getElementById('hud').style.display = 'none';
     document.getElementById('table').style.display = 'none';
     document.getElementById('prompt').style.display = 'none';

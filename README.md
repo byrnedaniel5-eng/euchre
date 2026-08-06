@@ -11,6 +11,20 @@ Two games so far:
 - **Draw It** — one person draws a prompt, everyone else races to guess it.
   Two to four people, no bots.
 
+## Looks
+
+Every screen sets `body[data-theme]`, and the stylesheet only swaps variables —
+each rule is written once against them.
+
+| Screen | Look |
+|---|---|
+| Landing / setup | Neutral slate. The hub should not look like either game. |
+| Euchre | Card-room green felt. |
+| Draw It | Ink-and-violet studio, so the white board pops. |
+
+The mobile browser chrome colour follows too, and the landing screen carries a
+colour stripe per game so the card you tap matches where you land.
+
 ## Adding a game
 
 The room layer (`server/rooms.js`) handles codes, seats, rejoining, leaving,
@@ -251,7 +265,7 @@ server/
       engine.js     turns, clock, scoring
       index.js      module; relays ink outside the state broadcast
 public/
-  index.html        home / lobby / one section per game
+  index.html        landing / setup / lobby / one section per game
   app.js            the shell: socket, home screen, lobby, menu, leaving
   style.css
   games/

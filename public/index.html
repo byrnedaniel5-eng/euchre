@@ -10,27 +10,21 @@
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🃏</text></svg>">
 </head>
-<body>
+<body data-theme="home">
 
-<!-- ------------------------------------------------------------ home -->
-<section id="join" class="screen">
-  <div class="join-card">
-    <h1>Game Night</h1>
-    <p class="tagline">Pick a game, share the code, play from anywhere.</p>
+<!-- --------------------------------------------------------- landing -->
+<section id="home" class="screen">
+  <div class="landing">
+    <div class="brand">
+      <h1>Game Night</h1>
+      <p class="tagline">Pick a game. Share the code. Play from anywhere.</p>
+    </div>
 
     <label for="name">Your name</label>
     <input id="name" maxlength="14" autocomplete="nickname" placeholder="Dan">
 
-    <label>Game</label>
+    <label>Choose a game</label>
     <div id="game-list" class="game-list"></div>
-
-    <label>How many people are playing?</label>
-    <div class="seg spread" id="opt-players"></div>
-    <p class="hint" id="players-hint"></p>
-
-    <div id="game-options"></div>
-
-    <button id="create" class="primary">Start a new game</button>
 
     <div class="divider"><span>or</span></div>
 
@@ -42,6 +36,26 @@
     </div>
 
     <p id="join-error" class="error" hidden></p>
+  </div>
+</section>
+
+<!-- ----------------------------------------------------------- setup -->
+<section id="setup" class="screen" hidden>
+  <div class="join-card">
+    <button id="setup-back" class="back-btn">‹ All games</button>
+    <div class="setup-head">
+      <span id="setup-icon" class="setup-icon"></span>
+      <h2 id="setup-name"></h2>
+    </div>
+    <p class="tagline" id="setup-blurb"></p>
+
+    <label>How many people are playing?</label>
+    <div class="seg spread" id="opt-players"></div>
+    <p class="hint" id="players-hint"></p>
+
+    <div id="game-options"></div>
+
+    <button id="create" class="primary">Start a new game</button>
   </div>
 </section>
 

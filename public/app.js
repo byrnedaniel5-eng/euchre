@@ -93,7 +93,7 @@
           store.set('lastRoom', null);
           pendingJoin = null;
           history.replaceState(null, '', location.pathname);
-          showScreen('join');
+          showScreen('home');
           showJoinError(msg.message);
         }
       } else {
@@ -138,10 +138,15 @@
     if (!def) return;
 
     $('game-list').innerHTML = catalogue.map((g) => `
-      <button class="game-card${g.id === chosenGame ? ' on' : ''}" data-game="${g.id}">
+      <button class="game-card" data-game="${g.id}" data-for="${g.id}">
         <span class="gc-icon">${g.icon || '🎲'}</span>
         <span class="gc-text"><b>${escapeHtml(g.name)}</b><i>${escapeHtml(g.blurb)}</i></span>
+        <span class="gc-go">›</span>
       </button>`).join('');
+
+    $('setup-icon').textContent = def.icon || '🎲';
+    $('setup-name').textContent = def.name;
+    $('setup-blurb').textContent = def.blurb;
 
     // Clamp the table size to what this game allows.
     playerCount = Math.min(def.maxPlayers, Math.max(def.minPlayers, playerCount));
@@ -172,7 +177,9 @@
     chosenGame = id;
     store.set('game', id);
     renderHome();
+    showScreen('setup');
   };
+  $('setup-back').onclick = () => showScreen('home');
   $('opt-players').onclick = (e) => {
     const v = Number(e.target.closest('button')?.dataset.v);
     if (!v) return;
@@ -234,9 +241,24 @@
 
   // ------------------------------------------------------------- screens
 
-  const SCREENS = ['join', 'lobby', 'game-euchre', 'game-draw'];
+  const SCREENS = ['home', 'setup', 'lobby', 'game-euchre', 'game-draw'];
+
+  // Each screen carries a look, so it is obvious at a glance which game you
+  // are in — the hub is not a card table, and the drawing game is not green.
+  const THEME_COLOR = { home: '#12141d', euchre: '#12261c', draw: '#17102a' };
+
+  function setTheme(name) {
+    document.body.dataset.theme = name;
+    document.querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', THEME_COLOR[name] || THEME_COLOR.home);
+  }
+
   function showScreen(id) {
     for (const s of SCREENS) $(s).hidden = s !== id;
+    if (id === 'home') setTheme('home');
+    else if (id === 'setup') setTheme(chosenGame);
+    else if (id === 'lobby') setTheme(state?.game || chosenGame);
+    else setTheme(id.replace('game-', ''));
   }
 
   function render() {
@@ -338,7 +360,7 @@
     $('overlay').hidden = true;
     $('conn-banner').hidden = true;
     $('join-error').hidden = true;
-    showScreen('join');
+    showScreen('home');
   }
 
   $('lobby-cancel').onclick = leaveGame;
@@ -390,6 +412,7 @@
     }
     if (!catalogue.some((g) => g.id === chosenGame)) chosenGame = catalogue[0].id;
     renderHome();
+    showScreen('home');
 
     const urlRoom = new URLSearchParams(location.search).get('room');
     const last = store.get('lastRoom');

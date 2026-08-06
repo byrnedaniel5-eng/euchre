@@ -237,7 +237,7 @@ try {
   console.log('\n1. join screen');
   await cdp.send('Page.navigate', { url: `http://127.0.0.1:${PORT}/` });
   await sleep(1200);
-  check(await cdp.eval(`!document.getElementById('join').hidden`), 'join screen is showing');
+  check(await cdp.eval(`!document.getElementById('home').hidden`), 'join screen is showing');
   check(await cdp.eval(`getComputedStyle(document.body).backgroundImage.includes('gradient')`),
     'stylesheet loaded');
   await cdp.shot('1-join');
@@ -245,6 +245,7 @@ try {
   console.log('\n2. create a game');
   await cdp.eval(`
     document.getElementById('name').value = 'Dan';
+    document.querySelector('[data-game="euchre"]').click();
     document.getElementById('create').click(); true`);
   await sleep(900);
   const code = await cdp.eval(`document.getElementById('room-code').textContent`);
