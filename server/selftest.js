@@ -1,11 +1,11 @@
 // Rules soak test: play thousands of full bot-vs-bot games and assert the
 // invariants that matter. Run with `node server/selftest.js`.
 
-import { EuchreGame, teamOf, partnerOf, WINNING_SCORE } from './euchre.js';
-import { botAct, evaluateHand } from './bot.js';
+import { EuchreGame, teamOf, partnerOf, WINNING_SCORE } from './games/euchre/engine.js';
+import { botAct, evaluateHand } from './games/euchre/bot.js';
 import {
   makeDeck, effectiveSuit, legalPlays, cardPower, winningPlayIndex, suitOf,
-} from './cards.js';
+} from './games/euchre/cards.js';
 
 let failures = 0;
 function assert(cond, msg, ctx) {

@@ -103,7 +103,7 @@ try {
   // Reveal the table so real styles apply, then measure each tag shape.
   await evaluate(`
     document.getElementById('join').hidden = true;
-    document.getElementById('game').hidden = false; true`);
+    document.getElementById('game-euchre').hidden = false; true`);
 
   // Every case is measured in the tightest seat (a side seat, whose column
   // sits next to the trick pile) as well as the roomy top seat — and at the

@@ -98,7 +98,7 @@ try {
   // Show just the hand strip against the felt, with a known set of cards.
   await evaluate(`
     document.getElementById('join').hidden = true;
-    document.getElementById('game').hidden = false;
+    document.getElementById('game-euchre').hidden = false;
     document.getElementById('hud').style.display = 'none';
     document.getElementById('table').style.display = 'none';
     document.getElementById('prompt').style.display = 'none';
@@ -108,7 +108,7 @@ try {
     box.id = 'shots';
     box.style.cssText =
       'display:flex;flex-direction:column;align-items:center;gap:18px;padding:26px 0';
-    document.getElementById('game').appendChild(box);
+    document.getElementById('game-euchre').appendChild(box);
     true`);
 
   for (const suits of SUITS) {

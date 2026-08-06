@@ -6,39 +6,29 @@
 <meta name="theme-color" content="#12261c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Euchre</title>
+<title>Game Night</title>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🃏</text></svg>">
 </head>
 <body>
 
-<!-- ------------------------------------------------------------ join -->
+<!-- ------------------------------------------------------------ home -->
 <section id="join" class="screen">
   <div class="join-card">
-    <h1>Euchre</h1>
-    <p class="tagline">One to four of you, bots for the rest, ten points.</p>
+    <h1>Game Night</h1>
+    <p class="tagline">Pick a game, share the code, play from anywhere.</p>
 
     <label for="name">Your name</label>
     <input id="name" maxlength="14" autocomplete="nickname" placeholder="Dan">
 
+    <label>Game</label>
+    <div id="game-list" class="game-list"></div>
+
     <label>How many people are playing?</label>
-    <div class="seg spread" id="opt-players">
-      <button data-v="1">1</button>
-      <button data-v="2">2</button>
-      <button data-v="3">3</button>
-      <button data-v="4">4</button>
-    </div>
+    <div class="seg spread" id="opt-players"></div>
     <p class="hint" id="players-hint"></p>
 
-    <div id="difficulty-row">
-      <label>Bot difficulty</label>
-      <div class="seg spread" id="opt-skill">
-        <button data-v="easy">Easy</button>
-        <button data-v="casual">Casual</button>
-        <button data-v="solid">Solid</button>
-      </div>
-      <p class="hint" id="skill-hint"></p>
-    </div>
+    <div id="game-options"></div>
 
     <button id="create" class="primary">Start a new game</button>
 
@@ -58,7 +48,7 @@
 <!-- ----------------------------------------------------------- lobby -->
 <section id="lobby" class="screen" hidden>
   <div class="join-card">
-    <h2>Waiting for your opponent</h2>
+    <h2>Waiting for one more</h2>
     <p class="tagline">Send them this code — or the link.</p>
     <div id="room-code" class="room-code">····</div>
     <button id="copy-link" class="primary">Copy invite link</button>
@@ -67,9 +57,8 @@
   </div>
 </section>
 
-<!-- ------------------------------------------------------------ game -->
-<section id="game" class="screen" hidden>
-
+<!-- ---------------------------------------------------------- euchre -->
+<section id="game-euchre" class="screen game-screen" hidden>
   <header id="hud">
     <div class="score" id="score-us">
       <span class="label">You</span><span class="value">0</span><span class="tricks"></span>
@@ -81,7 +70,7 @@
     <div class="score them" id="score-them">
       <span class="label">Them</span><span class="value">0</span><span class="tricks"></span>
     </div>
-    <button id="menu-btn" class="icon-btn" aria-label="Menu">⋯</button>
+    <button class="icon-btn menu-btn" aria-label="Menu">⋯</button>
   </header>
 
   <div id="table">
@@ -105,7 +94,6 @@
 
   <div id="prompt" class="prompt"></div>
 
-  <!-- bidding controls -->
   <div id="bid-panel" class="panel" hidden>
     <div id="bid-suits" class="bid-suits"></div>
     <label class="alone-toggle">
@@ -118,57 +106,104 @@
   </div>
 
   <div id="hand" class="hand"></div>
-
-  <!-- overlays -->
-  <div id="overlay" class="overlay" hidden>
-    <div class="overlay-card">
-      <h2 id="ov-title"></h2>
-      <p id="ov-body"></p>
-      <div id="ov-tricks" class="ov-tricks"></div>
-      <button id="ov-btn" class="primary"></button>
-    </div>
-  </div>
-
-  <div id="drawer" class="drawer" hidden>
-    <div class="drawer-head">
-      <strong>Game</strong>
-      <button id="drawer-close" class="icon-btn">✕</button>
-    </div>
-    <div class="drawer-meta">
-      Room <b id="drawer-room"></b> · <span id="drawer-conn"></span>
-    </div>
-
-    <div class="settings">
-      <div class="set-row">
-        <span class="set-label">Card style</span>
-        <div class="seg" id="opt-cards">
-          <button data-v="bold">Bold</button>
-          <button data-v="classic">Classic</button>
-          <button data-v="jumbo">Jumbo</button>
-        </div>
-      </div>
-      <div class="set-row">
-        <span class="set-label">Suit colours</span>
-        <div class="seg" id="opt-suits">
-          <button data-v="classic">Red / black</button>
-          <button data-v="vivid">Four colour</button>
-        </div>
-      </div>
-      <div class="card-preview" id="card-preview"></div>
-    </div>
-
-    <button id="leave-game" class="ghost wide leave">Leave game</button>
-    <div id="log" class="log"></div>
-    <div id="chat" class="chat"></div>
-    <form id="chat-form" class="chat-form">
-      <input id="chat-input" maxlength="200" placeholder="Say something…" autocomplete="off">
-      <button type="submit">Send</button>
-    </form>
-  </div>
-
-  <div id="conn-banner" class="conn-banner" hidden>Reconnecting…</div>
 </section>
 
+<!-- ------------------------------------------------------------ draw -->
+<section id="game-draw" class="screen game-screen" hidden>
+  <header id="draw-hud">
+    <div class="turn-pill"><span id="draw-turn">1/6</span></div>
+    <div id="draw-word" class="draw-word"></div>
+    <div id="draw-clock" class="clock">80</div>
+    <button class="icon-btn menu-btn" aria-label="Menu">⋯</button>
+  </header>
+
+  <div id="draw-scores" class="draw-scores"></div>
+
+  <div id="board-wrap">
+    <canvas id="board"></canvas>
+    <div id="choose-panel" class="choose-panel" hidden>
+      <p class="choose-title">Pick something to draw</p>
+      <div id="choose-words"></div>
+      <p class="hint" id="choose-timer"></p>
+    </div>
+    <div id="watch-note" class="watch-note" hidden></div>
+  </div>
+
+  <div id="tools" class="tools" hidden>
+    <div class="swatches" id="swatches"></div>
+    <div class="tool-row">
+      <button id="tool-thin" class="size-btn" data-w="3"><i style="width:4px;height:4px"></i></button>
+      <button id="tool-mid" class="size-btn on" data-w="7"><i style="width:9px;height:9px"></i></button>
+      <button id="tool-fat" class="size-btn" data-w="16"><i style="width:17px;height:17px"></i></button>
+      <button id="tool-erase" class="ghost">Erase</button>
+      <button id="tool-undo" class="ghost">Undo</button>
+      <button id="tool-clear" class="ghost">Clear</button>
+    </div>
+  </div>
+
+  <div id="guess-area" class="guess-area" hidden>
+    <div id="guess-feed" class="guess-feed"></div>
+    <form id="guess-form" class="chat-form">
+      <input id="guess-input" maxlength="60" placeholder="Type your guess…"
+             autocomplete="off" autocorrect="off" spellcheck="false">
+      <button type="submit">Guess</button>
+    </form>
+  </div>
+</section>
+
+<!-- --------------------------------------------------------- shared -->
+<div id="overlay" class="overlay" hidden>
+  <div class="overlay-card">
+    <h2 id="ov-title"></h2>
+    <p id="ov-body"></p>
+    <div id="ov-tricks" class="ov-tricks"></div>
+    <button id="ov-btn" class="primary"></button>
+  </div>
+</div>
+
+<div id="drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <strong>Game</strong>
+    <button id="drawer-close" class="icon-btn">✕</button>
+  </div>
+  <div class="drawer-meta">
+    Room <b id="drawer-room"></b> · <span id="drawer-conn"></span>
+  </div>
+
+  <div class="settings" id="card-settings">
+    <div class="set-row">
+      <span class="set-label">Card style</span>
+      <div class="seg" id="opt-cards">
+        <button data-v="bold">Bold</button>
+        <button data-v="classic">Classic</button>
+        <button data-v="jumbo">Jumbo</button>
+      </div>
+    </div>
+    <div class="set-row">
+      <span class="set-label">Suit colours</span>
+      <div class="seg" id="opt-suits">
+        <button data-v="classic">Red / black</button>
+        <button data-v="vivid">Four colour</button>
+      </div>
+    </div>
+    <div class="card-preview" id="card-preview"></div>
+  </div>
+
+  <button id="leave-game" class="ghost wide leave">Leave game</button>
+
+  <div id="log" class="log"></div>
+  <div id="chat" class="chat"></div>
+  <form id="chat-form" class="chat-form">
+    <input id="chat-input" maxlength="200" placeholder="Say something…" autocomplete="off">
+    <button type="submit">Send</button>
+  </form>
+</div>
+
+<div id="conn-banner" class="conn-banner" hidden>Reconnecting…</div>
+
 <script src="app.js"></script>
+<script src="games/euchre.js"></script>
+<script src="games/draw.js"></script>
+<script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

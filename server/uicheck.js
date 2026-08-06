@@ -254,7 +254,7 @@ try {
   console.log('\n3. partner joins, game starts');
   const p2 = scriptedPlayer(code, 'Sam');
   await sleep(1500);
-  check(await cdp.eval(`!document.getElementById('game').hidden`), 'game screen took over');
+  check(await cdp.eval(`!document.getElementById('game-euchre').hidden`), 'game screen took over');
   check(await cdp.eval(`document.querySelectorAll('#hand .card').length`) === 5,
     'five cards in hand');
   const seatTags = await cdp.eval(
@@ -351,7 +351,7 @@ try {
   console.log('\n7. menu drawer');
   await cdp.eval(`document.getElementById('ov-btn').click(); true`);
   await sleep(600);
-  await cdp.eval(`document.getElementById('menu-btn').click(); true`);
+  await cdp.eval(`document.querySelector('#game-euchre .menu-btn').click(); true`);
   await sleep(400);
   const logLines = await cdp.eval(`document.querySelectorAll('#log div').length`);
   check(logLines > 3, `game log is populated (${logLines} lines)`);

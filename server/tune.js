@@ -4,8 +4,8 @@
 //
 //   node server/tune.js
 
-import { EuchreGame } from './euchre.js';
-import { botAct, PROFILE } from './bot.js';
+import { EuchreGame } from './games/euchre/engine.js';
+import { botAct, PROFILE } from './games/euchre/bot.js';
 
 const BASE = { ...PROFILE };
 const GAMES = 4000;

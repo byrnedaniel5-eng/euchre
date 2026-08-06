@@ -4,8 +4,8 @@
 //
 //   node server/ladder.js [gamesPerPair]
 
-import { EuchreGame } from './euchre.js';
-import { botAct, SKILLS } from './bot.js';
+import { EuchreGame } from './games/euchre/engine.js';
+import { botAct, SKILLS } from './games/euchre/bot.js';
 
 const GAMES = Number(process.argv[2]) || 3000;
 const LEVELS = Object.keys(SKILLS);

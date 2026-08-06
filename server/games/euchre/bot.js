@@ -23,7 +23,7 @@ import {
   SAME_COLOR,
   RANK_VALUE,
 } from './cards.js';
-import { partnerOf, teamOf } from './euchre.js';
+import { partnerOf, teamOf } from './engine.js';
 
 // Difficulty is more than bid thresholds. A weak player also forgets what has
 // been played, misjudges a hand, and now and then just plays the wrong card —

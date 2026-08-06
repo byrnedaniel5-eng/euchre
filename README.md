@@ -1,7 +1,33 @@
-# Euchre
+# Game Night
 
-Euchre for one to four people on their own phones, with bots filling whatever
-seats are left. First team to ten.
+Games for people on their own phones, usually while already on a video call.
+The app holds the private information — your hand, your prompt — and gets out
+of the way; the talking is the game.
+
+Two games so far:
+
+- **Euchre** — trick-taking to ten, one to four people, bots filling any empty
+  seat.
+- **Draw It** — one person draws a prompt, everyone else races to guess it.
+  Two to four people, no bots.
+
+## Adding a game
+
+The room layer (`server/rooms.js`) handles codes, seats, rejoining, leaving,
+chat and the ready gate. A game is a module under `server/games/<id>/` that
+exports four things — how many can play, how to build a game, what each seat
+may see, and a `step()` saying whether anything should happen on a timer — plus
+a renderer under `public/games/<id>.js` registered with `registerGame()`.
+Register the module in `server/registry.js` and it appears on the home screen,
+setup options and all, with no other client changes.
+
+`server/games/euchre/index.js` is the reference: it is the interface with
+comments.
+
+## Euchre
+
+Euchre for one to four people, with bots filling whatever seats are left.
+First team to ten.
 
 Pick how many people are playing when you create the game; everyone else joins
 with a four-letter code. People take seats in join order and bots take the
@@ -21,6 +47,24 @@ rest, so the table works out as:
 ```
 
 Seats 0 and 2 are one team, seats 1 and 3 the other.
+
+## Draw It
+
+One person gets three prompts and picks one, then has 80 seconds to draw it
+with a finger while everyone else types guesses. Landing it early is worth
+more: 3 points in the first third of the clock, 2 in the second, 1 after that.
+The drawer scores whatever the fastest guesser scored, so you are pulling in
+the same direction rather than against each other. Everyone draws the same
+number of times, then the highest score wins.
+
+Guessing is forgiving about case, spacing, punctuation and stray plurals, and a
+guess within two letters of the answer is flagged as close.
+
+Strokes never travel inside the game state — a state broadcast per finger
+movement would be enormous. Points are batched every 45ms into their own small
+message, relayed to the other players, and the whole board is replayed to
+anyone who reconnects. Coordinates are 0..1 of the board, so a drawing made on
+a small phone arrives correctly on a big one.
 
 ## Running it locally
 
@@ -67,14 +111,14 @@ Standard 24-card euchre, first team to 10.
 - **Going alone** is in. Your partner sits the hand out and their cards are dead.
 - If all four pass twice the hand is thrown in and the next player deals.
   There is no stick-the-dealer — flip `STICK_THE_DEALER` in
-  `server/euchre.js` if you decide you want it.
+  `server/games/euchre/engine.js` if you decide you want it.
 
 Scoring: makers take 3 or 4 → 1 point; all 5 → 2; all 5 alone → 4; euchred → 2
 to the other side.
 
 ## The bots
 
-`server/bot.js`. They count trump, remember what has been played, and know
+`server/games/euchre/bot.js`. They count trump, remember what has been played, and know
 whether a card is the boss of its suit. They lead trump when their side called
 it, cash certain winners, duck when their partner already has the trick, ruff
 with the cheapest card that wins, and pitch to make voids.
@@ -144,6 +188,13 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
 - `server/uicheck.js` — drives headless Chrome at 390×844 as player one against
   a scripted player two, screenshotting each stage and failing on console
   errors or horizontal overflow.
+- `server/draw-e2e.js` — the drawing game over the wire: that only the drawer
+  sees the word, that a guesser cannot draw or choose, that ink reaches the
+  other phone, that the clock ends a turn by itself, and that the board is
+  replayed to someone who reconnects mid-drawing.
+- `server/draw-ui.js` — drives a real browser: picks a word, draws on the
+  canvas with synthetic pointer events, and confirms both that the pixels
+  landed and that the strokes reached the second player.
 - `server/leavecheck.js` — drives a browser through leaving a room from the
   lobby and from mid-hand, and asserts a refresh afterwards stays out. Rejoining
   is deliberately sticky, so the way out needs its own test. Also covers the
@@ -167,14 +218,26 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
 
 ```
 server/
-  cards.js     card primitives, trump/bower logic, trick resolution
-  euchre.js    the game state machine — no networking, no timers
-  bot.js       bidding, discarding, card play
-  index.js     express + ws, rooms, reconnect, bot scheduling
+  index.js          express + ws wiring
+  rooms.js          codes, seats, rejoin, leave, chat, ready gate  (game-agnostic)
+  registry.js       which games exist
+  games/
+    euchre/
+      cards.js      card primitives, trump/bower logic, trick resolution
+      engine.js     the game state machine — no networking, no timers
+      bot.js        bidding, discarding, card play, difficulty levels
+      index.js      the game-module interface, with comments
+    draw/
+      words.js      prompts, guess matching
+      engine.js     turns, clock, scoring
+      index.js      module; relays ink outside the state broadcast
 public/
-  index.html   one screen, three states (join / lobby / table)
+  index.html        home / lobby / one section per game
+  app.js            the shell: socket, home screen, lobby, menu, leaving
   style.css
-  app.js       renders server state, sends intents
+  games/
+    euchre.js       renderer
+    draw.js         renderer + canvas
 ```
 
 The server is authoritative. The browser never holds a hand it hasn't been
