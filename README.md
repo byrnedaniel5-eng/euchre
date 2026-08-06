@@ -84,9 +84,9 @@ current value sits under the countdown, so you can watch it drain.
 Getting there late still beats not getting there, which is why the floor is 20
 rather than 0.
 
-**The drawer scores nothing.** Everyone draws the same number of times, so
-scoring the guess alone is fair at any table size and the winner is simply
-whoever guessed best.
+**The drawer scores nothing for being guessed.** Everyone draws the same number
+of times, so scoring the guess alone is fair at any table size and the winner
+is simply whoever guessed best.
 
 That is not just a simplification. With two people every turn has one drawer
 and one guesser, so if the drawer is paid `k x` the guesser then over a game
@@ -98,6 +98,26 @@ guessing slowly costs your opponent more than you; below 1 you win by drawing
 badly. Every split has a hole in it, because with two people one player's score
 is always produced by the other's effort. Paying only the guesser is the option
 whose incentive is at least honest: guess faster than they do.
+
+### Word difficulty
+
+Prompts come in three tiers and you are shown one of each, with its stars, when
+you choose. A harder prompt multiplies the **guesser's** points — so an easy
+word tops out at 100, a medium at 130 and a hard at 170 — which on its own
+would make a brave pick pure charity, since only the guesser scores.
+
+So the drawer collects a flat bonus for a harder pick, paid only if somebody
+actually gets it: nothing for easy, +15 for medium, +35 for hard. Flat rather
+than a share of the guesser's score, deliberately: anything proportional puts
+the drawer's points back under the guesser's control, which is what made
+two-player scoring degenerate in the first place.
+
+Harder prompts also take longer to land, which partly cancels the bigger
+multiplier. Assuming an easy word is guessed with ~70% of the clock left, a
+medium with ~45% and a hard with ~25%, the drawer's net position works out at
+−76, −58 and −33 — so picking hard is the least costly choice, which is the
+whole point. Those times are the design's premise rather than measured data,
+and the test asserts the ordering so a retune cannot quietly invert it.
 
 Guessing is forgiving about case, spacing, punctuation and stray plurals, and a
 guess within two letters of the answer is flagged as close.

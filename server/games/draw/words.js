@@ -110,3 +110,30 @@ export function isNearMiss(guess, word) {
   }
   return d[a.length][b.length] <= 2;
 }
+
+// --------------------------------------------------------------- difficulty
+
+export const TIERS = ['easy', 'medium', 'hard'];
+export const STARS = { easy: '★', medium: '★★', hard: '★★★' };
+
+/** Which tier a prompt came from. The lists share no words, so this is exact. */
+const TIER_OF = new Map();
+for (const tier of TIERS) for (const w of WORDS[tier]) TIER_OF.set(w, tier);
+export const tierOf = (word) => TIER_OF.get(word) || 'easy';
+
+/**
+ * What a harder prompt is worth.
+ *
+ * The guesser's points are multiplied, so a hard word can pay 170 rather than
+ * 100. On its own that would make picking hard pure charity — you hand your
+ * opponent a bigger prize and take nothing — so the drawer collects a flat
+ * bonus for a harder pick, paid only if somebody actually gets it.
+ *
+ * The bonus is deliberately flat rather than a share of the guesser's score.
+ * Anything proportional puts the drawer's points back under the guesser's
+ * control, which is what made two-player scoring degenerate in the first
+ * place. A fixed amount depends only on the drawer's own choice and whether
+ * the drawing landed, so there is nothing to game.
+ */
+export const GUESS_MULTIPLIER = { easy: 1, medium: 1.3, hard: 1.7 };
+export const DRAWER_BONUS = { easy: 0, medium: 15, hard: 35 };

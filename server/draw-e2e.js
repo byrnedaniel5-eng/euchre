@@ -7,8 +7,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 
-import { matchesWord, isNearMiss, offerWords } from './games/draw/words.js';
-import { pointsFor, DrawGame } from './games/draw/engine.js';
+import {
+  matchesWord, isNearMiss, offerWords, tierOf, DRAWER_BONUS,
+} from './games/draw/words.js';
+import { pointsFor, scoreGuess, DrawGame } from './games/draw/engine.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3992;
@@ -50,6 +52,31 @@ assert(!isNearMiss('boat', 'lighthouse'), 'an unrelated word is not close');
   const [sa, sb] = g.scores;
   assert(sa !== sb, `a two-player game can separate (${sa} vs ${sb})`);
   assert(sa + sb > 0, 'and somebody scored');
+}
+
+// Word difficulty. A harder prompt pays the guesser more, and pays the drawer
+// a flat bonus so that picking one is not pure charity.
+assert(scoreGuess(80, 80, 'easy') === 100, 'an easy word tops out at 100');
+assert(scoreGuess(80, 80, 'medium') === 130, 'a medium word tops out at 130');
+assert(scoreGuess(80, 80, 'hard') === 170, 'a hard word tops out at 170');
+assert(scoreGuess(40, 80, 'hard') > scoreGuess(40, 80, 'easy'),
+  'the multiplier applies at any point on the clock');
+assert(DRAWER_BONUS.easy === 0 && DRAWER_BONUS.hard > DRAWER_BONUS.medium,
+  'the drawer bonus rises with difficulty and is nothing for an easy word');
+assert(tierOf('cat') === 'easy' && tierOf('lighthouse') === 'medium'
+  && tierOf('procrastination') === 'hard', 'prompts report their tier');
+
+// The point of the bonus: picking hard must cost the drawer less than picking
+// easy. Harder prompts take longer to land, so the guesser's larger multiplier
+// is partly cancelled — the assumed times below are the design's premise, and
+// if a retune breaks this the brave pick becomes charity again.
+{
+  const assumedShareLeft = { easy: 0.70, medium: 0.45, hard: 0.25 };
+  const netGap = (tier) => DRAWER_BONUS[tier] -
+    scoreGuess(Math.round(80 * assumedShareLeft[tier]), 80, tier);
+  assert(netGap('hard') > netGap('medium') && netGap('medium') > netGap('easy'),
+    `harder is the better pick for the drawer ` +
+    `(easy ${netGap('easy')}, medium ${netGap('medium')}, hard ${netGap('hard')})`);
 }
 
 console.log('\n2. scoring and prompts');
@@ -186,7 +213,9 @@ try {
   const gScore = a.state.scores[guesser().seat];
   const dScore = a.state.scores[drawer().seat];
   assert(gScore > 0, `the guesser scored ${gScore}`);
-  assert(dScore === 0, 'the drawer scores nothing — points are for guessing');
+  const expectedBonus = DRAWER_BONUS[tierOf(chosen)] || 0;
+  assert(dScore === expectedBonus,
+    `the drawer scores only the difficulty bonus (${dScore} for a ${tierOf(chosen)} word)`);
   assert(a.state.revealed.solved[0].secondsLeft > 0, 'the reveal shows how fast it was');
 
   console.log('\n7. the next turn waits for both, and swaps the drawer');

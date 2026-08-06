@@ -823,7 +823,8 @@ button.leave {
   gap: 10px;
   padding: 20px;
   text-align: center;
-  background: rgba(12, 30, 20, 0.94);
+  /* Follow the theme rather than the card table this started life on. */
+  background: color-mix(in srgb, var(--felt-1) 94%, transparent);
 }
 .choose-title { margin: 0; font-size: 15px; color: var(--muted); }
 #choose-words { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 260px; }
@@ -995,3 +996,17 @@ input:focus { border-color: var(--accent); }
 .setup-head { display: flex; align-items: center; justify-content: center; gap: 10px; clear: both; }
 .setup-head h2 { margin: 0; }
 .setup-icon { font-size: 30px; line-height: 1; }
+
+/* Prompt difficulty: stars in the header, and on each word you can pick. */
+.word-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.draw-stars { font-size: 10px; letter-spacing: 1px; line-height: 1; color: var(--muted); }
+.draw-stars:empty { display: none; }
+.draw-stars.tier-medium { color: var(--gold); }
+.draw-stars.tier-hard { color: var(--accent); }
+
+.word-btn { display: flex; flex-direction: column; gap: 3px; }
+.wb-word { font-size: 17px; }
+.wb-meta { font-size: 11px; font-weight: 600; color: var(--muted); }
+.wb-meta i { font-style: normal; margin-right: 6px; }
+.word-btn.tier-medium .wb-meta i { color: var(--gold); }
+.word-btn.tier-hard .wb-meta i { color: var(--accent); }

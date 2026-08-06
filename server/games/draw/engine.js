@@ -10,7 +10,9 @@
 //   'reveal'   - the word is shown and the round is scored
 //   'gameOver' - every turn has been taken
 
-import { offerWords, matchesWord, isNearMiss } from './words.js';
+import {
+  offerWords, matchesWord, isNearMiss, tierOf, GUESS_MULTIPLIER, DRAWER_BONUS,
+} from './words.js';
 
 export const CHOOSE_SECONDS = 15;
 export const DRAW_SECONDS = 80;
@@ -32,6 +34,11 @@ export function pointsFor(left, total) {
   return MIN_POINTS + Math.round((MAX_POINTS - MIN_POINTS) * share);
 }
 
+/** The same, scaled by how hard the prompt was. */
+export function scoreGuess(left, total, tier) {
+  return Math.round(pointsFor(left, total) * (GUESS_MULTIPLIER[tier] ?? 1));
+}
+
 export class DrawGame {
   constructor({
     names = [], playerCount = 2, turnsEach = TURNS_EACH, rng = Math.random,
@@ -45,8 +52,8 @@ export class DrawGame {
     this.drawSeconds = drawSeconds;
     this.scores = new Array(playerCount).fill(0);
     this.totalTurns = playerCount * turnsEach;
-    // Each player guesses on every turn they are not drawing.
-    this.maxScore = (this.totalTurns - turnsEach) * MAX_POINTS;
+    // No fixed ceiling any more: a hard prompt pays more than an easy one.
+    this.maxScore = 0;
     this.turn = 0;
     this.usedWords = new Set();
     this.log = [];
@@ -66,6 +73,7 @@ export class DrawGame {
     this.drawer = (this.drawer + 1) % this.playerCount;
     this.choices = offerWords(this.usedWords, this.rng);
     this.word = null;
+    this.tier = null;
     this.strokes = [];
     this.guesses = [];
     this.solved = []; // {seat, points, secondsLeft}
@@ -86,6 +94,7 @@ export class DrawGame {
     if (seat !== this.drawer) throw new Error('only the drawer picks the word');
     if (!this.choices.includes(word)) throw new Error('that word was not offered');
     this.word = word;
+    this.tier = tierOf(word);
     this.usedWords.add(word);
     this.phase = 'drawing';
     this.deadline = Date.now() + this.drawSeconds * 1000;
@@ -147,7 +156,7 @@ export class DrawGame {
 
     if (matchesWord(clean, this.word)) {
       const left = this.secondsLeft();
-      const points = pointsFor(left, this.drawSeconds);
+      const points = scoreGuess(left, this.drawSeconds, this.tier);
       this.solved.push({ seat, points, secondsLeft: left });
       this.scores[seat] += points;
       this.pushLog(`${this.names[seat]} got it with ${left}s left (+${points})`);
@@ -175,11 +184,24 @@ export class DrawGame {
     // you, pay less and drawing badly helps you. Since everyone draws the same
     // number of times, scoring the guess alone is fair at every table size and
     // makes the winner simply whoever guessed best.
-    if (!this.solved.length) this.pushLog(`Nobody got "${this.word}"`);
+    // The drawer's only stake: a flat bonus for having picked a harder prompt,
+    // paid only if somebody actually got there.
+    this.drawerBonus = 0;
+    if (!this.solved.length) {
+      this.pushLog(`Nobody got "${this.word}"`);
+    } else {
+      this.drawerBonus = DRAWER_BONUS[this.tier] || 0;
+      if (this.drawerBonus) {
+        this.scores[this.drawer] += this.drawerBonus;
+        this.pushLog(`${this.names[this.drawer]} +${this.drawerBonus} for a harder word`);
+      }
+    }
 
     this.revealed = {
       word: this.word,
+      tier: this.tier,
       drawer: this.drawer,
+      drawerBonus: this.drawerBonus,
       solved: this.solved.slice(),
       reason,
     };
@@ -224,8 +246,13 @@ export class DrawGame {
       wordLength: this.word ? this.word.replace(/[^a-z0-9]/gi, '').length : 0,
       wordPattern: this.word ? this.word.replace(/[a-z0-9]/gi, '·') : '',
       solved: this.solved,
+      tier: this.phase === 'choosing' ? null : this.tier,
+      tierMultiplier: this.tier ? (GUESS_MULTIPLIER[this.tier] ?? 1) : 1,
+      choiceTiers: this.phase === 'choosing' && isDrawer
+        ? this.choices.map((w) => tierOf(w))
+        : null,
       worthNow: this.phase === 'drawing'
-        ? pointsFor(this.secondsLeft(), this.drawSeconds)
+        ? scoreGuess(this.secondsLeft(), this.drawSeconds, this.tier)
         : 0,
       youSolved: this.solved.some((s) => s.seat === seat),
       guesses: this.guesses.slice(-12),

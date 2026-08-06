@@ -13,6 +13,7 @@
 
   const $ = (id) => document.getElementById(id);
   const COLORS = ['#161616', '#e23b3b', '#e08a1e', '#e8c93a', '#3fa653', '#2f7fd0', '#8a4fc4', '#8a5a3c'];
+  const STARS = { easy: '★', medium: '★★', hard: '★★★' };
   const BATCH_MS = 45;
 
   let state = null;
@@ -181,16 +182,30 @@
     } else if (drawing) {
       wordEl.textContent = s.wordPattern || '';
       wordEl.className = 'draw-word masked';
+    }
+    const starEl = $('draw-stars');
+    if (s.tier && (drawing || s.phase === 'reveal')) {
+      starEl.textContent = STARS[s.tier];
+      starEl.className = `draw-stars tier-${s.tier}`;
     } else {
+      starEl.textContent = '';
+      starEl.className = 'draw-stars';
+    }
+    if (!s.word && !drawing) {
       wordEl.textContent = '';
       wordEl.className = 'draw-word';
     }
 
     $('choose-panel').hidden = !(choosing && s.youAreDrawing);
     if (choosing && s.youAreDrawing && s.choices) {
-      $('choose-words').innerHTML = s.choices
-        .map((w) => `<button class="word-btn" data-w="${ctx.escapeHtml(w)}">${ctx.escapeHtml(w)}</button>`)
-        .join('');
+      $('choose-words').innerHTML = s.choices.map((w, i) => {
+        const tier = (s.choiceTiers || [])[i] || 'easy';
+        const bonus = { easy: 0, medium: 15, hard: 35 }[tier];
+        return `<button class="word-btn tier-${tier}" data-w="${ctx.escapeHtml(w)}">
+          <span class="wb-word">${ctx.escapeHtml(w)}</span>
+          <span class="wb-meta"><i>${STARS[tier]}</i>${bonus ? ` +${bonus} to you` : ''}</span>
+        </button>`;
+      }).join('');
     }
 
     const note = $('watch-note');
@@ -240,12 +255,13 @@
       return;
     }
     const total = state.drawSeconds || 80;
+    const mult = state.tierMultiplier || 1;
     const drawing = state.phase === 'drawing';
     const tick = () => {
       const left = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
       el.textContent = left;
       worth.textContent = drawing && !state.youAreDrawing && !state.youSolved
-        ? `${worthAt(left, total)} pts` : '';
+        ? `${Math.round(worthAt(left, total) * mult)} pts` : '';
       pill.className = 'clock' + (left <= 10 ? ' urgent' : '');
     };
     tick();
@@ -275,13 +291,18 @@
       const mine = r.solved.find((x) => x.seat === ctx.seat);
       const iDrew = r.drawer === ctx.seat;
       $('ov-title').textContent = r.solved.length
-        ? (mine ? `You got it! +${mine.points}` : iDrew ? 'They got it' : 'Time!')
+        ? (mine ? `You got it! +${mine.points}`
+          : iDrew ? (r.drawerBonus ? `They got it — +${r.drawerBonus}` : 'They got it')
+          : 'Time!')
         : 'Nobody got it';
       $('ov-body').textContent = `The word was “${r.word}”.`;
-      $('ov-tricks').textContent = r.solved
-        .map((x) => `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} ` +
-                    `+${x.points} with ${x.secondsLeft}s left`)
-        .join(' · ');
+      const lines = r.solved.map((x) =>
+        `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} +${x.points} with ${x.secondsLeft}s left`);
+      if (r.drawerBonus) {
+        lines.push(`${r.drawer === ctx.seat ? 'You' : state.names[r.drawer]} ` +
+                   `+${r.drawerBonus} for a ${STARS[r.tier]} word`);
+      }
+      $('ov-tricks').textContent = lines.join(' · ');
 
       const ready = state.ready || [];
       const iAmReady = ready.includes(ctx.seat);
