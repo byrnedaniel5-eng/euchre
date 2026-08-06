@@ -51,11 +51,30 @@ Seats 0 and 2 are one team, seats 1 and 3 the other.
 ## Draw It
 
 One person gets three prompts and picks one, then has 80 seconds to draw it
-with a finger while everyone else types guesses. Landing it early is worth
-more: 3 points in the first third of the clock, 2 in the second, 1 after that.
-The drawer scores whatever the fastest guesser scored, so you are pulling in
-the same direction rather than against each other. Everyone draws the same
-number of times, then the highest score wins.
+with a finger while everyone else types guesses. Everyone draws the same number
+of times, then the highest score wins.
+
+**Scoring runs down with the clock.** A guess is worth 100 points landed
+instantly and falls in a straight line to 20 at the buzzer, so every second you
+take costs you something rather than nothing until you cross a threshold. The
+current value sits under the countdown, so you can watch it drain.
+
+| Time left | Worth |
+|---|---|
+| 80s | 100 |
+| 60s | 80 |
+| 40s | 60 |
+| 20s | 40 |
+| 1s | 21 |
+
+Getting there late still beats not getting there, which is why the floor is 20
+rather than 0.
+
+The drawer is paid once, at the end of the turn, the **average** of what
+everyone who solved it scored. Paying on the first correct guess would ignore
+the rest of the table, and a drawing two people solve is a better drawing than
+one only the quickest guesser saw. With two players there is exactly one
+guesser, so you both score the same and are pulling in the same direction.
 
 Guessing is forgiving about case, spacing, punctuation and stray plurals, and a
 guess within two letters of the answer is flagged as close.

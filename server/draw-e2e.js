@@ -34,10 +34,20 @@ assert(isNearMiss('lighthous', 'lighthouse'), 'a typo counts as close');
 assert(!isNearMiss('boat', 'lighthouse'), 'an unrelated word is not close');
 
 console.log('\n2. scoring and prompts');
-assert(pointsFor(80, 80) === 3, 'an instant guess is worth 3');
-assert(pointsFor(40, 80) === 2, 'halfway through is worth 2');
-assert(pointsFor(10, 80) === 1, 'a last-second guess is worth 1');
+assert(pointsFor(80, 80) === 100, 'an instant guess is worth the full 100');
+assert(pointsFor(40, 80) === 60, 'halfway through is worth 60');
+assert(pointsFor(1, 80) === 21, 'a buzzer-beater still scores 21');
 assert(pointsFor(0, 80) === 0, 'no time left scores nothing');
+// Every second has to cost something, which is the whole point of the change.
+let prev = Infinity;
+let strictlyFalling = true;
+for (let left = 80; left >= 1; left--) {
+  const p = pointsFor(left, 80);
+  if (p > prev) strictlyFalling = false;
+  prev = p;
+}
+assert(strictlyFalling, 'the value never rises as the clock runs down');
+assert(pointsFor(80, 80) - pointsFor(79, 80) > 0, 'even one second off the top costs points');
 const offer = offerWords();
 assert(offer.length === 3 && new Set(offer).size === 3, 'three distinct prompts are offered');
 const used = new Set(offer);
@@ -154,8 +164,12 @@ try {
   guesser().act({ kind: 'guess', text: chosen.toUpperCase() });
   await waitFor(() => a.state.phase === 'reveal', 'the turn to end');
   assert(a.state.revealed.word === chosen, 'the word is revealed to everyone');
-  assert(a.state.scores[guesser().seat] > 0, 'the guesser scored');
-  assert(a.state.scores[drawer().seat] > 0, 'the drawer scored too');
+  const gScore = a.state.scores[guesser().seat];
+  const dScore = a.state.scores[drawer().seat];
+  assert(gScore > 0, `the guesser scored ${gScore}`);
+  assert(dScore > 0, `the drawer scored ${dScore} for the drawing`);
+  assert(a.state.revealed.drawerAward === dScore, 'the reveal reports the drawer award');
+  assert(a.state.revealed.solved[0].secondsLeft > 0, 'the reveal shows how fast it was');
 
   console.log('\n7. the next turn waits for both, and swaps the drawer');
   const wasDrawer = a.state.drawer;

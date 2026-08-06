@@ -221,18 +221,31 @@
     }).join('');
   }
 
+  // Points fall away every second, so show what a guess is worth right now
+  // rather than only revealing it once the turn is over.
+  const MIN_POINTS = 20;
+  const MAX_POINTS = 100;
+  const worthAt = (left, total) => (left <= 0 ? 0
+    : MIN_POINTS + Math.round((MAX_POINTS - MIN_POINTS) * Math.min(1, left / total)));
+
   function renderClock() {
     clearInterval(clockTimer);
     const el = $('draw-clock');
+    const worth = $('draw-worth');
+    const pill = $('clock-pill');
     if (state.phase !== 'drawing' && state.phase !== 'choosing') {
       el.textContent = '–';
-      el.className = 'clock';
+      worth.textContent = '';
+      pill.className = 'clock';
       return;
     }
+    const total = state.drawSeconds || 80;
+    const drawing = state.phase === 'drawing';
     const tick = () => {
       const left = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
       el.textContent = left;
-      el.className = 'clock' + (left <= 10 ? ' urgent' : '');
+      worth.textContent = drawing && !state.youSolved ? `${worthAt(left, total)} pts` : '';
+      pill.className = 'clock' + (left <= 10 ? ' urgent' : '');
     };
     tick();
     clockTimer = setInterval(tick, 250);
@@ -259,13 +272,18 @@
       const r = state.revealed;
       ov.hidden = false;
       const mine = r.solved.find((x) => x.seat === ctx.seat);
+      const iDrew = r.drawer === ctx.seat;
       $('ov-title').textContent = r.solved.length
-        ? (mine ? `You got it! +${mine.points}` : 'Time!')
+        ? (mine ? `You got it! +${mine.points}`
+          : iDrew ? `They got it — +${r.drawerAward}` : 'Time!')
         : 'Nobody got it';
       $('ov-body').textContent = `The word was “${r.word}”.`;
-      $('ov-tricks').textContent = r.solved.length
-        ? r.solved.map((x) => `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} +${x.points}`).join(' · ')
-        : '';
+      const lines = r.solved.map((x) =>
+        `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} +${x.points} (${x.secondsLeft}s left)`);
+      if (r.drawerAward) {
+        lines.push(`${r.drawer === ctx.seat ? 'You' : state.names[r.drawer]} +${r.drawerAward} for drawing`);
+      }
+      $('ov-tricks').textContent = lines.join(' · ');
 
       const ready = state.ready || [];
       const iAmReady = ready.includes(ctx.seat);

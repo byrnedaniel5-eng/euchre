@@ -16,13 +16,20 @@ export const CHOOSE_SECONDS = 15;
 export const DRAW_SECONDS = 80;
 export const TURNS_EACH = 3;
 
-/** Points for landing a guess with `left` of `total` seconds remaining: 1–3. */
+export const MIN_POINTS = 20;
+export const MAX_POINTS = 100;
+
+/**
+ * What a guess is worth with `left` of `total` seconds still on the clock.
+ * Straight-line from MAX down to MIN, so every second you take costs you
+ * something, rather than nothing at all until you cross a bucket boundary.
+ * Landing it at the buzzer is still worth a fifth of a perfect one — getting
+ * there should always beat not getting there.
+ */
 export function pointsFor(left, total) {
   if (left <= 0) return 0;
-  const share = left / total;
-  if (share > 0.66) return 3;
-  if (share > 0.33) return 2;
-  return 1;
+  const share = Math.max(0, Math.min(1, left / total));
+  return MIN_POINTS + Math.round((MAX_POINTS - MIN_POINTS) * share);
 }
 
 export class DrawGame {
@@ -141,8 +148,6 @@ export class DrawGame {
       const points = pointsFor(left, this.drawSeconds);
       this.solved.push({ seat, points, secondsLeft: left });
       this.scores[seat] += points;
-      // The drawer earns whatever the fastest guesser earned, once.
-      if (this.solved.length === 1) this.scores[this.drawer] += points;
       this.pushLog(`${this.names[seat]} got it with ${left}s left (+${points})`);
       if (this.solved.length === this.guessers().length) this.endTurn('everyone got it');
       return { correct: true, near: false, points };
@@ -159,13 +164,28 @@ export class DrawGame {
   endTurn(reason = 'time') {
     if (this.phase === 'reveal' || this.phase === 'gameOver') return;
     this.phase = 'reveal';
+
+    // The drawer is paid once, at the end, from the average of everyone who
+    // got there. Paying on the first correct guess would ignore the rest of
+    // the table, and a drawing two people solve is a better drawing than one
+    // only the quickest guesser saw.
+    this.drawerAward = 0;
+    if (this.solved.length) {
+      const total = this.solved.reduce((sum, x) => sum + x.points, 0);
+      this.drawerAward = Math.round(total / this.solved.length);
+      this.scores[this.drawer] += this.drawerAward;
+      this.pushLog(`${this.names[this.drawer]} scores ${this.drawerAward} for the drawing`);
+    } else {
+      this.pushLog(`Nobody got "${this.word}"`);
+    }
+
     this.revealed = {
       word: this.word,
       drawer: this.drawer,
+      drawerAward: this.drawerAward,
       solved: this.solved.slice(),
       reason,
     };
-    if (!this.solved.length) this.pushLog(`Nobody got "${this.word}"`);
   }
 
   nextTurn() {
@@ -197,6 +217,7 @@ export class DrawGame {
       youAreDrawing: isDrawer,
       deadline: this.deadline,
       secondsLeft: this.secondsLeft(),
+      drawSeconds: this.drawSeconds,
       // Only the drawer sees the word or the choices while a turn is live.
       choices: this.phase === 'choosing' && isDrawer ? this.choices : null,
       word: isDrawer || this.phase === 'reveal' || this.phase === 'gameOver'
@@ -205,6 +226,9 @@ export class DrawGame {
       wordLength: this.word ? this.word.replace(/[^a-z0-9]/gi, '').length : 0,
       wordPattern: this.word ? this.word.replace(/[a-z0-9]/gi, '·') : '',
       solved: this.solved,
+      worthNow: this.phase === 'drawing'
+        ? pointsFor(this.secondsLeft(), this.drawSeconds)
+        : 0,
       youSolved: this.solved.some((s) => s.seat === seat),
       guesses: this.guesses.slice(-12),
       revealed: this.phase === 'reveal' || this.phase === 'gameOver' ? this.revealed : null,

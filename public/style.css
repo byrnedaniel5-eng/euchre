@@ -860,3 +860,9 @@ button.leave {
 .gmsg b { color: var(--ink); }
 .gmsg.near { color: var(--gold); }
 .gmsg.near i { font-style: normal; font-weight: 700; }
+
+/* The clock pill carries the countdown and what a guess is worth right now. */
+.clock { display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+#draw-worth { font-size: 9px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted); }
+#draw-worth:empty { display: none; }
+.clock.urgent #draw-worth { color: #ffb3b3; }
