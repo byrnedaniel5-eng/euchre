@@ -244,7 +244,8 @@
     const tick = () => {
       const left = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
       el.textContent = left;
-      worth.textContent = drawing && !state.youSolved ? `${worthAt(left, total)} pts` : '';
+      worth.textContent = drawing && !state.youAreDrawing && !state.youSolved
+        ? `${worthAt(left, total)} pts` : '';
       pill.className = 'clock' + (left <= 10 ? ' urgent' : '');
     };
     tick();
@@ -274,16 +275,13 @@
       const mine = r.solved.find((x) => x.seat === ctx.seat);
       const iDrew = r.drawer === ctx.seat;
       $('ov-title').textContent = r.solved.length
-        ? (mine ? `You got it! +${mine.points}`
-          : iDrew ? `They got it — +${r.drawerAward}` : 'Time!')
+        ? (mine ? `You got it! +${mine.points}` : iDrew ? 'They got it' : 'Time!')
         : 'Nobody got it';
       $('ov-body').textContent = `The word was “${r.word}”.`;
-      const lines = r.solved.map((x) =>
-        `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} +${x.points} (${x.secondsLeft}s left)`);
-      if (r.drawerAward) {
-        lines.push(`${r.drawer === ctx.seat ? 'You' : state.names[r.drawer]} +${r.drawerAward} for drawing`);
-      }
-      $('ov-tricks').textContent = lines.join(' · ');
+      $('ov-tricks').textContent = r.solved
+        .map((x) => `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} ` +
+                    `+${x.points} with ${x.secondsLeft}s left`)
+        .join(' · ');
 
       const ready = state.ready || [];
       const iAmReady = ready.includes(ctx.seat);

@@ -45,6 +45,8 @@ export class DrawGame {
     this.drawSeconds = drawSeconds;
     this.scores = new Array(playerCount).fill(0);
     this.totalTurns = playerCount * turnsEach;
+    // Each player guesses on every turn they are not drawing.
+    this.maxScore = (this.totalTurns - turnsEach) * MAX_POINTS;
     this.turn = 0;
     this.usedWords = new Set();
     this.log = [];
@@ -165,24 +167,19 @@ export class DrawGame {
     if (this.phase === 'reveal' || this.phase === 'gameOver') return;
     this.phase = 'reveal';
 
-    // The drawer is paid once, at the end, from the average of everyone who
-    // got there. Paying on the first correct guess would ignore the rest of
-    // the table, and a drawing two people solve is a better drawing than one
-    // only the quickest guesser saw.
-    this.drawerAward = 0;
-    if (this.solved.length) {
-      const total = this.solved.reduce((sum, x) => sum + x.points, 0);
-      this.drawerAward = Math.round(total / this.solved.length);
-      this.scores[this.drawer] += this.drawerAward;
-      this.pushLog(`${this.names[this.drawer]} scores ${this.drawerAward} for the drawing`);
-    } else {
-      this.pushLog(`Nobody got "${this.word}"`);
-    }
+    // Only guessing scores. The drawer takes nothing for their turn.
+    //
+    // With two people there is one drawer and one guesser per turn, so paying
+    // the drawer the same as the guesser tied the game every time, and paying
+    // any other multiple rewards sabotage — pay more and guessing slowly helps
+    // you, pay less and drawing badly helps you. Since everyone draws the same
+    // number of times, scoring the guess alone is fair at every table size and
+    // makes the winner simply whoever guessed best.
+    if (!this.solved.length) this.pushLog(`Nobody got "${this.word}"`);
 
     this.revealed = {
       word: this.word,
       drawer: this.drawer,
-      drawerAward: this.drawerAward,
       solved: this.solved.slice(),
       reason,
     };
@@ -211,6 +208,7 @@ export class DrawGame {
       game: 'draw',
       names: this.names,
       scores: this.scores,
+      maxScore: this.maxScore,
       turn: this.turn,
       totalTurns: this.totalTurns,
       drawer: this.drawer,

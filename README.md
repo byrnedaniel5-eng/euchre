@@ -84,11 +84,20 @@ current value sits under the countdown, so you can watch it drain.
 Getting there late still beats not getting there, which is why the floor is 20
 rather than 0.
 
-The drawer is paid once, at the end of the turn, the **average** of what
-everyone who solved it scored. Paying on the first correct guess would ignore
-the rest of the table, and a drawing two people solve is a better drawing than
-one only the quickest guesser saw. With two players there is exactly one
-guesser, so you both score the same and are pulling in the same direction.
+**The drawer scores nothing.** Everyone draws the same number of times, so
+scoring the guess alone is fair at any table size and the winner is simply
+whoever guessed best.
+
+That is not just a simplification. With two people every turn has one drawer
+and one guesser, so if the drawer is paid `k x` the guesser then over a game
+`A - B = (k - 1)(P - Q)`, where P and Q are how quickly each player's drawings
+were guessed. At `k = 1` every game ends level — which is exactly what the
+first version did, and the end-to-end test cheerfully printed `300-300` for
+several days without anyone noticing. Above 1 you win by drawing well, so
+guessing slowly costs your opponent more than you; below 1 you win by drawing
+badly. Every split has a hole in it, because with two people one player's score
+is always produced by the other's effort. Paying only the guesser is the option
+whose incentive is at least honest: guess faster than they do.
 
 Guessing is forgiving about case, spacing, punctuation and stray plurals, and a
 guess within two letters of the answer is flagged as close.

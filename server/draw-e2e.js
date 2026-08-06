@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 
 import { matchesWord, isNearMiss, offerWords } from './games/draw/words.js';
-import { pointsFor } from './games/draw/engine.js';
+import { pointsFor, DrawGame } from './games/draw/engine.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3992;
@@ -32,6 +32,25 @@ assert(!matchesWord('dog', 'cat'), 'a different word is not accepted');
 assert(!matchesWord('', 'cat'), 'an empty guess is not accepted');
 assert(isNearMiss('lighthous', 'lighthouse'), 'a typo counts as close');
 assert(!isNearMiss('boat', 'lighthouse'), 'an unrelated word is not close');
+
+// Two players used to be structurally unable to win: the drawer was paid the
+// same as the guesser, so both scores moved together every turn and every game
+// ended level. Points are for guessing only now, so a game must separate.
+{
+  const g = new DrawGame({ names: ['A', 'B'], playerCount: 2, turnsEach: 2, drawSeconds: 80 });
+  const speeds = [70, 15, 70, 15]; // one player consistently quicker
+  for (let t = 0; t < 4; t++) {
+    g.chooseWord(g.drawer, g.choices[0]);
+    const guesser = g.guessers()[0];
+    g.deadline = Date.now() + speeds[t] * 1000; // pretend this much clock is left
+    g.guess(guesser, g.word);
+    if (g.phase !== 'reveal') g.endTurn();
+    if (t < 3) g.nextTurn();
+  }
+  const [sa, sb] = g.scores;
+  assert(sa !== sb, `a two-player game can separate (${sa} vs ${sb})`);
+  assert(sa + sb > 0, 'and somebody scored');
+}
 
 console.log('\n2. scoring and prompts');
 assert(pointsFor(80, 80) === 100, 'an instant guess is worth the full 100');
@@ -167,8 +186,7 @@ try {
   const gScore = a.state.scores[guesser().seat];
   const dScore = a.state.scores[drawer().seat];
   assert(gScore > 0, `the guesser scored ${gScore}`);
-  assert(dScore > 0, `the drawer scored ${dScore} for the drawing`);
-  assert(a.state.revealed.drawerAward === dScore, 'the reveal reports the drawer award');
+  assert(dScore === 0, 'the drawer scores nothing — points are for guessing');
   assert(a.state.revealed.solved[0].secondsLeft > 0, 'the reveal shows how fast it was');
 
   console.log('\n7. the next turn waits for both, and swaps the drawer');
