@@ -209,6 +209,30 @@ try {
     check(painted > 200, `the canvas actually has ink on it (${painted} dark pixels)`);
     await shot('draw-4-drawing');
 
+    console.log('\n4b. the drawing survives losing the connection');
+    const inkPixels = `(() => {
+      const c = document.getElementById('board');
+      const g = c.getContext('2d');
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i] < 200 && d[i + 3] > 0) n++;
+      return n;
+    })()`;
+    const beforeDrop = await evaluate(inkPixels);
+
+    // A phone whose screen turns off loses its socket and rejoins from
+    // scratch: join, board replay, first state. A reload takes exactly that
+    // path, and does it deterministically.
+    await cdp('Page.reload', {});
+    await sleep(1400);
+    const back = await until(`!document.getElementById('game-draw').hidden`, 20000);
+    check(back, 'rejoined the game after the connection was lost');
+    await sleep(700);
+    const afterDrop = await evaluate(inkPixels);
+    check(afterDrop > beforeDrop * 0.8,
+      `the drawing is still there (${beforeDrop} px before, ${afterDrop} after)`);
+    await shot('draw-4b-after-reconnect');
+
     console.log('\n5. the guesser gets it');
     const word = await evaluate(`document.getElementById('draw-word').textContent`);
     p2.act({ kind: 'guess', text: 'not that' });

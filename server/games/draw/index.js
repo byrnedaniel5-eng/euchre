@@ -67,18 +67,18 @@ export default {
       case 'stroke': {
         const stroke = game.addStroke(seat, action.stroke);
         // Straight out to the other players, bypassing the state broadcast.
-        if (stroke) ctx.broadcastRaw({ type: 'ink', op: 'add', stroke }, seat);
+        if (stroke) ctx.broadcastRaw({ type: 'ink', op: 'add', turn: game.turn, stroke }, seat);
         return 'quiet';
       }
 
       case 'clear':
         game.clearBoard(seat);
-        ctx.broadcastRaw({ type: 'ink', op: 'clear' }, seat);
+        ctx.broadcastRaw({ type: 'ink', op: 'clear', turn: game.turn }, seat);
         return 'quiet';
 
       case 'undo':
         game.undoStroke(seat);
-        ctx.broadcastRaw({ type: 'ink', op: 'replace', strokes: game.strokes }, seat);
+        ctx.broadcastRaw({ type: 'ink', op: 'replace', turn: game.turn, strokes: game.strokes }, seat);
         return 'quiet';
 
       case 'guess': {
@@ -134,9 +134,10 @@ export default {
   /** Replay the board to someone who just connected. */
   onJoin(game, seat, sendToSocket) {
     // The first player to arrive joins before there is a game at all.
-    if (game?.strokes?.length) {
-      sendToSocket({ type: 'ink', op: 'replace', strokes: game.strokes });
-    }
+    if (!game) return;
+    // Always send, even when empty: it tells a reconnecting client which turn
+    // the board it now holds belongs to, so it does not wipe it as stale.
+    sendToSocket({ type: 'ink', op: 'replace', turn: game.turn, strokes: game.strokes || [] });
   },
 
   CHOOSE_SECONDS,

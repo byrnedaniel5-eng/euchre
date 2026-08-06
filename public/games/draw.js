@@ -149,22 +149,29 @@
 
   // ---------------------------------------------------------------- render
 
-  let lastTurn = null;
+  // Which turn the strokes we are holding belong to. Set by ink messages, not
+  // by state, so that a board replayed after a reconnect is recognised as
+  // current rather than wiped as leftovers from the previous turn.
+  let strokesTurn = null;
 
   function render(s, c) {
     state = s;
     ctx = c;
     setupCanvas();
 
-    // A new turn means a blank board. The server clears its copy too, so this
-    // is just keeping the local canvas in step rather than trusting it.
-    if (s.turn !== lastTurn) {
-      lastTurn = s.turn;
+    // A new turn means a blank board — but only if what we are holding really
+    // is from an older turn. Locking your phone drops the socket, and the
+    // rejoin replays the board before the first state arrives; clearing on
+    // "state.turn !== null" wiped it every time.
+    if (strokesTurn !== null && s.turn !== strokesTurn) {
+      strokesTurn = s.turn;
       strokes = [];
       live = null;
       pending = [];
       $('guess-feed').innerHTML = '';
       redraw();
+    } else if (strokesTurn === null) {
+      strokesTurn = s.turn;
     }
 
     $('draw-turn').textContent = `${s.turn}/${s.totalTurns}`;
@@ -389,6 +396,9 @@
 
   function handleMessage(msg) {
     if (msg.type === 'ink') {
+      // A replay for a turn we have already moved past is stale; ignore it.
+      if (msg.turn != null && strokesTurn != null && msg.turn < strokesTurn) return;
+      if (msg.turn != null) strokesTurn = msg.turn;
       if (msg.op === 'add') mergeStroke(msg.stroke);
       else if (msg.op === 'clear') strokes = [];
       else if (msg.op === 'replace') strokes = (msg.strokes || []).map((s) => ({ ...s }));
@@ -407,7 +417,7 @@
       strokes = [];
       live = null;
       pending = [];
-      lastTurn = null;
+      strokesTurn = null;
       clearInterval(clockTimer);
       $('guess-feed').innerHTML = '';
       redraw();

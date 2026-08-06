@@ -128,6 +128,13 @@ message, relayed to the other players, and the whole board is replayed to
 anyone who reconnects. Coordinates are 0..1 of the board, so a drawing made on
 a small phone arrives correctly on a big one.
 
+Every ink message carries the turn it belongs to, and the client tracks which
+turn its strokes are from. That is not bookkeeping for its own sake: a phone
+whose screen turns off drops its socket and rejoins, and the rejoin replays the
+board *before* the first state arrives. Clearing the canvas on "the turn is not
+the one I last saw" wiped the replayed drawing every single time, because after
+a rejoin the client had not seen any turn yet.
+
 ## Running it locally
 
 ```bash
