@@ -1010,3 +1010,15 @@ input:focus { border-color: var(--accent); }
 .wb-meta i { font-style: normal; margin-right: 6px; }
 .word-btn.tier-medium .wb-meta i { color: var(--gold); }
 .word-btn.tier-hard .wb-meta i { color: var(--accent); }
+
+/* Every overlay covers the menu button, so it carries its own way out. */
+.ov-leave {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  background: none;
+  border: none;
+}
+.ov-leave:active { color: var(--ink); }

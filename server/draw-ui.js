@@ -261,6 +261,26 @@ try {
     await shot('draw-5-reveal');
   }
 
+  console.log('\n5b. you can get out from under the overlay');
+  // Every overlay covers the menu button, so before this the only way out of a
+  // finished game was a refresh — which rejoins the same room.
+  check(await evaluate(`!document.getElementById('overlay').hidden`), 'an overlay is up');
+  check(await evaluate(`
+    (() => {
+      const b = document.getElementById('ov-leave');
+      if (!b) return false;
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    })()`), 'the overlay carries its own way back');
+  await evaluate(`window.confirm = () => true;
+                  document.getElementById('ov-leave').click(); true`);
+  check(await until(`!document.getElementById('home').hidden`),
+    'it returns to the landing screen');
+  check(await evaluate(`document.getElementById('overlay').hidden`), 'and clears the overlay');
+  check(await evaluate(`!location.search.includes('room=')`),
+    'and drops the room, so a refresh does not pull you back in');
+  await shot('draw-6-left');
+
   console.log('\n6. no layout or script errors');
   const overflow = await evaluate(
     `document.documentElement.scrollWidth - document.documentElement.clientWidth`);

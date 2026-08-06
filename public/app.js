@@ -364,6 +364,13 @@
   }
 
   $('lobby-cancel').onclick = leaveGame;
+  // Every overlay covers the menu button, so without this there is no way out
+  // of a finished game except a refresh — which rejoins the same room.
+  $('ov-leave').onclick = () => {
+    const mid = state && !['gameOver', 'lobby'].includes(state.phase);
+    if (mid && !confirm('Leave this game? It will end for everyone.')) return;
+    leaveGame();
+  };
   $('leave-game').onclick = () => {
     const mid = state && !['gameOver', 'lobby'].includes(state.phase);
     if (mid && !confirm('Leave this game? It will end for everyone.')) return;

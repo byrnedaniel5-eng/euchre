@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 
 import {
-  matchesWord, isNearMiss, offerWords, tierOf, DRAWER_BONUS,
+  matchesWord, isNearMiss, offerWords, tierOf, DRAWER_BONUS, WORDS,
 } from './games/draw/words.js';
 import { pointsFor, scoreGuess, DrawGame } from './games/draw/engine.js';
 
@@ -65,6 +65,25 @@ assert(DRAWER_BONUS.easy === 0 && DRAWER_BONUS.hard > DRAWER_BONUS.medium,
   'the drawer bonus rises with difficulty and is nothing for an easy word');
 assert(tierOf('cat') === 'easy' && tierOf('lighthouse') === 'medium'
   && tierOf('procrastination') === 'hard', 'prompts report their tier');
+
+// Word list integrity. tierOf resolves a word to a tier through one map, so a
+// word appearing in two tiers would silently take whichever was loaded last —
+// and a hard prompt scored as easy is a quiet unfairness nobody would spot.
+{
+  const all = [...WORDS.easy, ...WORDS.medium, ...WORDS.hard];
+  const lower = all.map((w) => w.toLowerCase());
+  const dupes = lower.filter((w, i) => lower.indexOf(w) !== i);
+  assert(dupes.length === 0, `no prompt appears in two tiers (${dupes.join(', ') || 'none'})`);
+
+  const malformed = all.filter((w) => w !== w.trim() || /\s{2,}/.test(w) || w.length < 2);
+  assert(malformed.length === 0,
+    `every prompt is clean text (${JSON.stringify(malformed)})`);
+
+  // A short game must never have to repeat itself within a tier.
+  const smallest = Math.min(WORDS.easy.length, WORDS.medium.length, WORDS.hard.length);
+  assert(smallest >= 60,
+    `every tier has enough prompts (smallest ${smallest}, total ${all.length})`);
+}
 
 // The point of the bonus: picking hard must cost the drawer less than picking
 // easy. Harder prompts take longer to land, so the guesser's larger multiplier

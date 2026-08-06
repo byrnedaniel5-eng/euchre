@@ -342,7 +342,10 @@ and works at every size.
   a lock screen, or a walk out of wifi range all resume the same seat. The seat
   is never given away, so nobody can take it while you're gone.
 - Because rejoining is that sticky, there has to be a deliberate way out:
-  **Cancel** on the lobby and **Leave game** in the ⋯ menu. Leaving clears the
+  **Cancel** on the lobby, **Leave game** in the ⋯ menu, and **Back to games**
+  on every overlay. That last one matters more than it looks: an overlay covers
+  the ⋯ button, so between turns and at the end of a game there was no exit at
+  all, and a refresh rejoined the room you were trying to leave. Leaving clears the
   stored room, the URL and the socket, and gives the seat up server-side — the
   one case where a seat is released rather than held. Whoever is left keeps the
   same code so a replacement can join. Without this, every refresh drops you
