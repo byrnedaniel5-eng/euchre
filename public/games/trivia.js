@@ -63,12 +63,19 @@
       spinTo(s.categories, s.category, s.spinMs || 2600);
     }
 
-    const spinning = s.phase === 'spinning';
-    $('wheel-stage').hidden = !spinning;
-    $('tv-question').hidden = spinning;
-    $('wheel-label').textContent = spinning ? 'Spinning…' : '';
+    const onWheel = s.phase === 'spinning' || s.phase === 'toSpin';
+    $('wheel-stage').hidden = !onWheel;
+    $('tv-question').hidden = onWheel;
 
-    if (!spinning && s.question) renderQuestion(s);
+    const yours = s.phase === 'toSpin' && s.youSpin;
+    $('wheel').classList.toggle('tappable', yours);
+    $('wheel-label').textContent =
+      s.phase === 'spinning' ? 'Spinning…'
+      : yours ? 'Your spin — tap the wheel'
+      : s.phase === 'toSpin' ? `${s.names[s.spinner]} spins next…`
+      : '';
+
+    if (!onWheel && s.question) renderQuestion(s);
     renderOverlay();
   }
 
@@ -140,6 +147,10 @@
         : 'Answer as fast as you can';
   }
 
+  $('wheel-stage').onclick = () => {
+    if (state?.phase === 'toSpin' && state.youSpin) ctx.act({ kind: 'spin' });
+  };
+
   $('tv-options').onclick = (e) => {
     const btn = e.target.closest('button[data-i]');
     if (!btn || btn.disabled) return;
@@ -176,7 +187,8 @@
       else $('ov-title').textContent = `Correct +${mine.points}`;
 
       $('ov-body').textContent = `Answer: ${r.question.options[r.question.answer]}`;
-      $('ov-tricks').textContent = r.answers.length
+
+      const scoreLine = r.answers.length
         ? r.answers
             .slice()
             .sort((a, b) => b.secondsLeft - a.secondsLeft)
@@ -184,28 +196,18 @@
               (a.correct ? `+${a.points}` : '✗'))
             .join(' · ')
         : 'Nobody answered';
+      const next = r.nextSpinner === ctx.seat ? 'You spin next'
+        : `${state.names[r.nextSpinner]} spins next`;
+      $('ov-tricks').textContent = `${scoreLine} — ${next}`;
 
-      const ready = state.ready || [];
-      const iAmReady = ready.includes(ctx.seat);
-      const waiting = Array.from({ length: state.humans }, (_, i) => i)
-        .filter((i) => i !== ctx.seat && !ready.includes(i));
-      const waitText = waiting.length === 1
-        ? `Waiting for ${state.names[waiting[0]]}…`
-        : `Waiting for ${waiting.length} others…`;
-
+      // No button: the reveal clears itself, and the wheel screen behind it
+      // waits on a person. Leaving is still reachable.
       const btn = $('ov-btn');
-      btn.disabled = iAmReady;
-      const last = state.index >= state.questionCount;
-      btn.textContent = iAmReady ? (waiting.length ? waitText : 'Next…')
-        : last ? 'See the result' : 'Spin the wheel';
-      btn.onclick = () => {
-        btn.disabled = true;
-        btn.textContent = waiting.length ? waitText : 'Next…';
-        ctx.act({ kind: 'nextQuestion' });
-      };
+      btn.hidden = true;
       return;
     }
 
+    $('ov-btn').hidden = false;
     ov.hidden = true;
   }
 

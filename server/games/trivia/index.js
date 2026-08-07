@@ -5,7 +5,7 @@
 // hides behind an animation that was going to run anyway — and if it overruns,
 // the wheel simply rests a moment longer rather than the game stalling.
 
-import { TriviaGame, QUESTION_SECONDS, SPIN_MS } from './engine.js';
+import { TriviaGame, QUESTION_SECONDS, SPIN_MS, REVEAL_MS } from './engine.js';
 import { QuestionSource, CATEGORIES } from './questions.js';
 
 const FAST = process.env.EUCHRE_FAST === '1';
@@ -66,9 +66,8 @@ export default {
         game.answer(seat, action.choice);
         return;
 
-      case 'nextQuestion':
-        if (game.phase !== 'reveal') throw new Error('question is not over');
-        if (ctx.markReady(seat)) game.nextQuestion();
+      case 'spin':
+        game.spin(seat);
         return;
 
       case 'newGame':
@@ -98,7 +97,12 @@ export default {
         run: () => game.endQuestion('time'),
       };
     }
-    return null; // reveal and gameOver wait on the players
+    if (game.phase === 'reveal') {
+      // Long enough to read the answer. Nobody is rushed past anything: the
+      // next screen waits on a person tapping the wheel.
+      return { delay: FAST ? 200 : REVEAL_MS, run: () => game.afterReveal() };
+    }
+    return null; // toSpin and gameOver wait on the players
   },
 
   CATEGORIES,

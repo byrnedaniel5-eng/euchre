@@ -144,13 +144,25 @@ try {
   const p2 = socketPlayer(code, 'Ben');
   check(await until(`!document.getElementById('game-trivia').hidden`), 'the quiz screen opens');
 
-  console.log('\n2. the wheel spins to the chosen category');
+  console.log('\n2. the wheel waits for you to tap it');
   const painted = await evaluate(
     `document.getElementById('wheel').style.background.includes('conic-gradient')`);
   check(painted, 'the wheel is painted from the category list');
+  check(await until(`document.getElementById('wheel').classList.contains('tappable')`),
+    'it is your spin, so the wheel is tappable');
+  check(await evaluate(`/your spin/i.test(document.getElementById('wheel-label').textContent)`),
+    'and it says so');
+  check(await evaluate(`document.getElementById('tv-category').textContent === ''`),
+    'the category is not given away before the spin');
+  await shot('trivia-2-wheel-ready');
+
+  const before = await evaluate(`document.getElementById('wheel').style.transform`);
+  await evaluate(`document.getElementById('wheel-stage').click(); true`);
+  check(await until(`document.getElementById('wheel').style.transform !== '${before}'`),
+    'tapping the wheel spins it');
   const spun = await evaluate(`document.getElementById('wheel').style.transform`);
-  check(/rotate\([-0-9.]+deg\)/.test(spun || ''), `the wheel rotated (${spun})`);
-  await shot('trivia-2-wheel');
+  check(/rotate\([-0-9.]+deg\)/.test(spun || ''), `it rotated (${spun})`);
+  await shot('trivia-3-spinning');
 
   console.log('\n3. the question arrives');
   check(await until(`!document.getElementById('tv-question').hidden`, 25000),
@@ -163,7 +175,7 @@ try {
   check(shownCat.length > 0, `the category is named (${shownCat})`);
   check(await evaluate(`document.getElementById('tv-worth').textContent.includes('pts')`),
     'and it shows what answering now is worth');
-  await shot('trivia-3-question');
+  await shot('trivia-4-question');
 
   console.log('\n4. answering locks in');
   await evaluate(`document.querySelector('#tv-options button').click(); true`);
@@ -171,7 +183,7 @@ try {
     'the options lock once you answer');
   check(await until(`/waiting|locked/i.test(document.getElementById('tv-status').textContent)`),
     'and it says it is waiting for the other player');
-  await shot('trivia-4-locked');
+  await shot('trivia-5-locked');
 
   await sleep(200);
   p2.act({ kind: 'answer', choice: 1 });

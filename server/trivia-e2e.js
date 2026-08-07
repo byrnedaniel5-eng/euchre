@@ -21,6 +21,9 @@ const assert = (cond, msg) => {
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** Spin, then force a known question — the engine only opens one after a spin. */
+const openQuestion = (g, q) => { g.spin(g.spinner); g.beginQuestion(q); };
+
 // -------------------------------------------------------------- questions
 
 console.log('1. the question supply');
@@ -73,7 +76,7 @@ assert(pointsFor(10, 20) === 60, 'halfway is worth 60');
 assert(pointsFor(0, 20) === 0, 'no time left scores nothing');
 {
   const g = new TriviaGame({ names: ['A', 'B'], playerCount: 2, questionCount: 3, questionSeconds: 20 });
-  g.beginQuestion({ category: 9, difficulty: 'easy', text: 'q', options: ['w', 'x', 'y', 'z'], answer: 2 });
+  openQuestion(g, { category: 9, difficulty: 'easy', text: 'q', options: ['w', 'x', 'y', 'z'], answer: 2 });
   const first = g.answer(0, 2);
   const second = g.answer(1, 2);
   assert(first.correct && second.correct, 'both answered correctly');
@@ -84,7 +87,7 @@ assert(pointsFor(0, 20) === 0, 'no time left scores nothing');
 }
 {
   const g = new TriviaGame({ names: ['A', 'B'], playerCount: 2, questionCount: 3 });
-  g.beginQuestion({ category: 9, difficulty: 'easy', text: 'q', options: ['w', 'x', 'y', 'z'], answer: 1 });
+  openQuestion(g, { category: 9, difficulty: 'easy', text: 'q', options: ['w', 'x', 'y', 'z'], answer: 1 });
   g.answer(0, 3);
   assert(g.scores[0] === 0, 'a wrong answer scores nothing');
   assert(g.streaks[0] === 0, 'and breaks the streak');
@@ -100,17 +103,23 @@ console.log('\n3. the wheel decides, not the animation');
 {
   const g = new TriviaGame({ names: ['A', 'B'], playerCount: 2, questionCount: 5 });
   const seen = new Set();
+  const spinners = new Set();
   let noncesDiffer = true;
   let lastNonce = g.spinNonce;
   for (let i = 0; i < 4; i++) {
+    spinners.add(g.spinner);
+    g.spin(g.spinner);
     seen.add(g.spunCategory);
     g.beginQuestion({ category: g.spunCategory, difficulty: 'easy', text: 'q',
       options: ['a', 'b', 'c', 'd'], answer: 0 });
+    // Seat 0 is always right, so seat 0 should keep the wheel.
     g.answer(0, 0); g.answer(1, 1);
-    g.nextQuestion();
+    g.afterReveal();
     if (g.spinNonce === lastNonce) noncesDiffer = false;
     lastNonce = g.spinNonce;
   }
+  assert(spinners.size === 1 && spinners.has(0),
+    'the player who keeps getting it right keeps the wheel');
   assert(CATEGORIES.some((c) => c.id === g.spunCategory), 'the wheel lands on a real category');
   assert(noncesDiffer, 'every spin gets a fresh nonce so the wheel re-animates');
   assert(seen.size >= 2, `the wheel actually varies (${seen.size} categories in 4 spins)`);
@@ -119,7 +128,7 @@ console.log('\n3. the wheel decides, not the animation');
 console.log('\n4. the answer is not leaked before the reveal');
 {
   const g = new TriviaGame({ names: ['A', 'B'], playerCount: 2, questionCount: 3 });
-  g.beginQuestion({ category: 9, difficulty: 'easy', text: 'q', options: ['a', 'b', 'c', 'd'], answer: 3 });
+  openQuestion(g, { category: 9, difficulty: 'easy', text: 'q', options: ['a', 'b', 'c', 'd'], answer: 3 });
   const view = g.viewFor(0);
   assert(view.question.answer === null, 'the correct index is withheld mid-question');
   assert(JSON.stringify(view).indexOf('"answer":3') === -1,
@@ -196,6 +205,13 @@ try {
   assert(a.state.questionCount === 5, 'five questions as chosen');
   assert(a.state.categories.length === 8, 'the wheel has eight categories');
 
+  assert(a.state.phase === 'toSpin', 'the game opens waiting for a spin');
+  assert(a.state.spinner === 0, 'the first spin belongs to whoever made the room');
+  b.act({ kind: 'spin' });
+  await sleep(200);
+  assert(a.state.phase === 'toSpin', 'the wrong player cannot spin');
+  assert(b.errors.some((e) => /not your spin/i.test(e)), 'and is told so');
+  a.act({ kind: 'spin' });
   await waitFor(() => a.state.phase === 'question', 'first question', 20000);
   assert(!!a.state.question && a.state.question.options.length === 4,
     `a question arrived with four options ("${a.state.question.text.slice(0, 40)}…")`);
@@ -217,13 +233,23 @@ try {
   assert(a.state.question.answer !== null, 'the answer appears at the reveal');
   assert(a.state.revealed.answers.length === 2, 'both answers are in the reveal');
 
-  console.log('\n6. the next question waits for both');
+  console.log('\n6. the wheel goes to whoever got it right');
+  const wonBy = a.state.revealed.fastest;
+  assert(a.state.revealed.nextSpinner === (wonBy !== null ? wonBy : 1),
+    `the wheel is promised to the right player (fastest was ${wonBy})`);
+
+  await waitFor(() => a.state.phase === 'toSpin', 'the reveal to clear itself', 15000);
+  const holder = a.state.spinner === a.seat ? a : b;
+  const other = holder === a ? b : a;
+  assert(a.state.spinner === (wonBy !== null ? wonBy : 1),
+    `the winner now holds the wheel (seat ${a.state.spinner})`);
+
   const idx = a.state.index;
-  a.act({ kind: 'nextQuestion' });
+  other.act({ kind: 'spin' });
   await sleep(250);
-  assert(a.state.index === idx, 'one player pressing does not spin the wheel');
-  b.act({ kind: 'nextQuestion' });
-  await waitFor(() => a.state.index === idx + 1, 'next question');
+  assert(a.state.index === idx, 'the other player cannot take the spin');
+  holder.act({ kind: 'spin' });
+  await waitFor(() => a.state.index === idx + 1, 'the next question');
   assert(a.state.spinNonce !== undefined, 'the new spin carries a nonce');
 
   console.log('\n7. play it out');
@@ -232,16 +258,18 @@ try {
     if (a.state.phase === 'question') {
       if (a.state.yourAnswer === null) a.act({ kind: 'answer', choice: 0 });
       if (b.state.yourAnswer === null) b.act({ kind: 'answer', choice: 1 });
-    } else if (a.state.phase === 'reveal') {
-      a.act({ kind: 'nextQuestion' });
-      b.act({ kind: 'nextQuestion' });
+    } else if (a.state.phase === 'toSpin') {
+      (a.state.spinner === a.seat ? a : b).act({ kind: 'spin' });
     }
     await sleep(120);
   }
   assert(a.state.phase === 'gameOver', `the game finished (${guard} steps)`);
   assert(a.state.scores.length >= 2, `final scores ${a.state.scores.slice(0, 2).join('–')}`);
-  assert(a.errors.filter((e) => !/already answered/i.test(e)).length === 0,
-    `no unexpected errors (${a.errors.slice(0, 3).join('; ')})`);
+  // The driver polls state and can fire a stale spin or a duplicate answer;
+  // both are refused correctly, which is the point. Anything else is a bug.
+  const expected = /already answered|not your spin|wheel is not ready/i;
+  const unexpected = a.errors.concat(b.errors).filter((e) => !expected.test(e));
+  assert(unexpected.length === 0, `no unexpected errors (${unexpected.slice(0, 3).join('; ')})`);
 
   await Promise.all([a.close(), b.close()]);
 } catch (err) {

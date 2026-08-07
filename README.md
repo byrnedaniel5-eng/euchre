@@ -139,14 +139,20 @@ a rejoin the client had not seen any turn yet.
 
 ## Quiz Wheel
 
-Between questions the wheel spins for one of eight categories. Everyone then
-sees the same question and four options, and answers independently against a
-20-second clock. A correct answer is worth 100 down to 20 as the clock runs,
+**Whoever gets a question right spins the wheel for the next one.** They tap it
+themselves; everyone else waits and watches it turn. The first spin of a game
+goes to whoever made the room, and if nobody gets a question right the wheel
+moves along a seat rather than sticking with the same person.
+
+The wheel picks one of eight categories. Everyone then sees the same question
+and four options, and answers independently against a 20-second clock. A correct answer is worth 100 down to 20 as the clock runs,
 and the **first** correct answer takes a further 30 — being fastest is the
 whole point, and without the bonus two quick answers score almost the same.
 
-The category is decided by the server before the wheel starts turning; the
-state carries the chosen segment and a nonce, and each phone rotates to it.
+The category is decided by the server the moment the wheel is tapped, before it
+starts turning; the state carries the chosen segment and a nonce, and each
+phone rotates to it. The header holds the category name back until it stops,
+or it gives away the landing.
 Both therefore agree on the result no matter how their animations drift, and a
 state resend after a reconnect does not re-spin the wheel.
 

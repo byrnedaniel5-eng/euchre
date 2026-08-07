@@ -3,6 +3,7 @@
 // asymmetry to reason about. Fastest correct answer wins the question.
 //
 // Phases:
+//   'toSpin'   - waiting for whoever won the last question to tap the wheel
 //   'spinning' - the wheel is turning; the category is already decided
 //   'question' - the question is up and the clock is running
 //   'reveal'   - answer shown and scored
@@ -11,6 +12,7 @@
 import { CATEGORIES, categoryById } from './questions.js';
 
 export const SPIN_MS = 2600;
+export const REVEAL_MS = 4000;
 export const QUESTION_SECONDS = 20;
 export const MIN_POINTS = 20;
 export const MAX_POINTS = 100;
@@ -39,7 +41,14 @@ export class TriviaGame {
     this.questionCount = questionCount;
     this.index = 0;
     this.log = [];
-    this.startSpin();
+    // Somebody has to go first, before anyone has won anything.
+    this.spinner = 0;
+    this.phase = 'toSpin';
+    this.deadline = 0;
+    this.spinNonce = 0;
+    this.spunCategory = null;
+    this.question = null;
+    this.answers = [];
   }
 
   pushLog(text) {
@@ -58,6 +67,13 @@ export class TriviaGame {
    * which segment to land on and spins to it, so both phones show the same
    * result no matter how their animations drift.
    */
+  /** Only the player whose spin it is may start it. */
+  spin(seat) {
+    if (this.phase !== 'toSpin') throw new Error('the wheel is not ready');
+    if (seat !== this.spinner) throw new Error('it is not your spin');
+    this.startSpin();
+  }
+
   startSpin() {
     this.index += 1;
     this.question = null;
@@ -116,17 +132,24 @@ export class TriviaGame {
   endQuestion(reason = 'time') {
     if (this.phase === 'reveal' || this.phase === 'gameOver') return;
     this.phase = 'reveal';
+    const fastest = this.answers.find((a) => a.first)?.seat ?? null;
+    // Getting it right earns you the wheel. If nobody did, it moves along so
+    // the same person is not left holding it every time.
+    this.pendingSpinner = fastest !== null
+      ? fastest
+      : (this.spinner + 1) % this.playerCount;
     this.revealed = {
       question: this.question,
       answers: this.answers.slice(),
       reason,
-      // Whoever got there first, if anyone did.
-      fastest: this.answers.find((a) => a.first)?.seat ?? null,
+      fastest,
+      nextSpinner: this.pendingSpinner,
     };
   }
 
-  nextQuestion() {
-    if (this.phase !== 'reveal') throw new Error('question is not over');
+  /** Leave the reveal: either hand the wheel over, or end the game. */
+  afterReveal() {
+    if (this.phase !== 'reveal') return;
     if (this.index >= this.questionCount) {
       this.phase = 'gameOver';
       const best = Math.max(...this.scores);
@@ -136,7 +159,8 @@ export class TriviaGame {
       this.pushLog(`*** ${winners.join(' & ')} win with ${best} ***`);
       return;
     }
-    this.startSpin();
+    this.spinner = this.pendingSpinner;
+    this.phase = 'toSpin';
   }
 
   // ------------------------------------------------------------------ view
@@ -155,6 +179,8 @@ export class TriviaGame {
       questionCount: this.questionCount,
       categories: CATEGORIES,
       category: this.spunCategory,
+      spinner: this.spinner,
+      youSpin: seat === this.spinner,
       spinNonce: this.spinNonce,
       spinMs: this.spinMs,
       deadline: this.deadline,

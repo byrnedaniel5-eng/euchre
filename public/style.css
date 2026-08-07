@@ -1119,3 +1119,14 @@ body[data-theme="trivia"] {
 .tv-options button.faded:disabled { opacity: 0.45; }
 
 .ds .streak { font-size: 10px; color: var(--gold); }
+
+/* The wheel is the button when it is your spin. */
+.wheel-stage { cursor: default; }
+.wheel.tappable { cursor: pointer; animation: wheel-ready 1.8s ease-in-out infinite; }
+@keyframes wheel-ready {
+  0%, 100% { box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 30px rgba(0,0,0,.35),
+                         0 0 0 0 rgba(255, 203, 71, .55); }
+  50%      { box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 30px rgba(0,0,0,.35),
+                         0 0 0 14px rgba(255, 203, 71, 0); }
+}
+.wheel-label { font-weight: 600; }
