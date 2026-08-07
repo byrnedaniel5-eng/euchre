@@ -1130,3 +1130,48 @@ body[data-theme="trivia"] {
                          0 0 0 14px rgba(255, 203, 71, 0); }
 }
 .wheel-label { font-weight: 600; }
+
+/* -------------------------------------------------------------- the lobby */
+
+.lobby-players { display: flex; flex-direction: column; gap: 6px; }
+.lp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 15px;
+  text-align: left;
+}
+.lp b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp .tagpill {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(232, 195, 102, 0.22);
+  color: var(--gold);
+}
+.lp.offline { opacity: 0.5; }
+.lp.bot { border-style: dashed; color: var(--muted); }
+
+/* One icon per wheel segment, so the colours mean something. Each .wseg is a
+   full-size overlay rotated to its slice with the icon pinned near the rim, so
+   the icons ride round with the wheel and the landing one finishes upright. */
+.wseg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  padding-top: 9%;
+  transform: rotate(var(--a));
+  pointer-events: none;
+}
+.wseg i {
+  font-style: normal;
+  font-size: clamp(15px, 5.2vw, 21px);
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}

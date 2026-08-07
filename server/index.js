@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  rooms, joinRoom, leaveRoom, maybeStart, applyAction, broadcast, broadcastChat,
+  rooms, joinRoom, leaveRoom, hostStart, applyAction, broadcast, broadcastChat,
   stateFor, reapRooms, catalogue,
 } from './rooms.js';
 
@@ -54,7 +54,12 @@ wss.on('connection', (ws) => {
   ws.on('pong', () => { ws.isAlive = true; });
 
   let room = null;
-  let seat = null;
+  let myId = null;
+  // Resolved per message, never cached: seats are compacted when somebody
+  // leaves a lobby, which moves everyone below them down one. A cached index
+  // would quietly start acting for the wrong player.
+  const seatOf = () =>
+    (room && myId ? room.seats.findIndex((p) => p?.playerId === myId) : -1);
 
   ws.on('message', (raw) => {
     let msg;
@@ -67,7 +72,9 @@ wss.on('connection', (ws) => {
     if (msg.type === 'join') {
       const result = joinRoom(ws, msg);
       if (result.error) return send(ws, { type: 'error', message: result.error });
-      ({ room, seat } = result);
+      room = result.room;
+      myId = result.playerId;
+      const seat = result.seat;
 
       send(ws, {
         type: 'joined',
@@ -75,18 +82,31 @@ wss.on('connection', (ws) => {
         game: room.gameId,
         seat,
         playerId: result.playerId,
-        humans: room.humanCount,
+        isHost: result.isHost,
         chat: room.chat,
       });
       // Anything the game wants to hand a returning player — a drawing board,
       // for instance — that is too big to live in every state broadcast.
       room.mod.onJoin?.(room.game, seat, (m) => send(ws, m));
-      maybeStart(room);
+      broadcast(room);
       return;
     }
 
-    if (!room || seat === null) return;
+    if (!room) return;
+    const seat = seatOf();
+    if (seat < 0) return;
     room.lastActivity = Date.now();
+
+    // Only the host starts, and only from the lobby.
+    if (msg.type === 'start') {
+      try {
+        hostStart(room, seat);
+      } catch (err) {
+        send(ws, { type: 'error', message: err.message });
+        send(ws, { type: 'state', state: stateFor(room, seat) });
+      }
+      return;
+    }
 
     if (msg.type === 'action') {
       try {
@@ -104,7 +124,7 @@ wss.on('connection', (ws) => {
     if (msg.type === 'leave') {
       leaveRoom(room, seat, ws);
       room = null;
-      seat = null;
+      myId = null;
       return;
     }
 
@@ -117,7 +137,9 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    if (!room || seat === null) return;
+    if (!room) return;
+    const seat = seatOf();
+    if (seat < 0) return;
     room.seats[seat]?.sockets.delete(ws);
     // The seat is kept: a locked phone or a dropped signal should not forfeit
     // the game. Rooms are reaped on the TTL sweep instead.

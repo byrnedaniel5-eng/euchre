@@ -21,6 +21,8 @@ const assert = (cond, msg) => {
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const TABLE_SIZE_HEADING = String.fromCharCode(10) +
+  '13. the host decides the table size by starting';
 
 // ------------------------------------------------------------ test client
 
@@ -43,7 +45,7 @@ class Client {
       this.ws = new WebSocket(URL);
       this.ws.on('open', () => {
         this.ws.send(JSON.stringify({
-          type: 'join', playerId: this.playerId, name: this.name, room, players,
+          type: 'join', playerId: this.playerId, name: this.name, room,
         }));
       });
       this.ws.on('message', (raw) => {
@@ -168,7 +170,19 @@ try {
   await gf.connect(dan.room);
   assert(gf.seat === 1, 'second player takes seat 1');
   assert(gf.room === dan.room, 'both in the same room');
+  await waitFor(() => dan.state?.phase === 'lobby' && gf.state?.phase === 'lobby',
+    'both clients to see the lobby');
+  assert(dan.state.youAreHost === true, 'whoever made the room is the host');
+  assert(gf.state.youAreHost === false, 'the person who joined is not');
+  assert(dan.state.bots === 2, 'the lobby shows the 2 bots that would fill the table');
 
+  gf.send({ type: 'start' });
+  await sleep(200);
+  assert(dan.state.phase === 'lobby', 'a guest cannot start the game');
+  assert(gf.errors.some((e) => /only the host/i.test(e)), 'and is told why');
+  gf.errors.length = 0;
+
+  dan.send({ type: 'start' });
   await waitFor(() => dan.state && dan.state.phase !== 'lobby', 'game start');
   assert(dan.state.names[2] === 'Robo' && dan.state.names[3] === 'Chip', 'bots fill seats 2 and 3');
   assert(dan.state.you.hand.length === 5, 'dealt five cards');
@@ -251,7 +265,8 @@ try {
   const rando = new Client('Nope', 'pid-rando');
   await rando.connect(dan.room).catch(() => {});
   await sleep(150);
-  assert(rando.errors.some((e) => /full/i.test(e)), 'third joiner is turned away');
+  assert(rando.errors.some((e) => /already started/i.test(e)),
+    'somebody arriving after the start is turned away');
 
   console.log('\n10. finish the resumed game');
   danAgain.autoPlay = true;
@@ -272,6 +287,8 @@ try {
   const newcomer = new Client('Alex', 'pid-alex');
   await newcomer.connect(sharedRoom);
   assert(newcomer.seat === 1, 'the vacated seat is free for someone new');
+  await sleep(150);
+  assert(danAgain.state.phase === 'lobby', 'and the room is a lobby again, awaiting a start');
 
   console.log('\n12. an abandoned room is cleaned up');
   danAgain.send({ type: 'leave' });
@@ -289,44 +306,48 @@ try {
     rando.close().catch(() => {}), ghost.close().catch(() => {}),
   ]);
 
-  console.log('\n13. every table size plays a full game');
+  console.log(TABLE_SIZE_HEADING);
   for (const n of [1, 2, 3, 4]) {
     const seats = [];
     for (let i = 0; i < n; i++) {
       const c = new Client(`P${i}`, `pid-t${n}-${i}`);
-      await c.connect(i === 0 ? null : seats[0].room, i === 0 ? n : undefined);
+      await c.connect(i === 0 ? null : seats[0].room);
       seats.push(c);
     }
+    await sleep(150);
+    assert(seats[0].state.bots === 4 - n, `${n} in the lobby: it offers ${4 - n} bot(s)`);
+
+    seats[0].send({ type: 'start' });
     await waitFor(() => seats[0].state && seats[0].state.phase !== 'lobby',
       `${n}-player game to start`);
 
-    assert(seats[0].state.humans === n, `${n} player(s): server reports ${n} human seats`);
+    assert(seats[0].state.humans === n, `${n} player(s): the table froze at ${n} humans`);
     assert(seats.every((p) => p.state.you.hand.length === 5),
       `${n} player(s): everyone is dealt five cards`);
     assert(seats.every((p, i) => p.seat === i),
       `${n} player(s): people fill seats in join order`);
     const bots = seats[0].state.names.slice(n);
     assert(bots.length === 4 - n,
-      `${n} player(s): ${4 - n} bot(s) fill the rest (${bots.join(', ') || 'none'})`);
+      `${n} player(s): ${4 - n} bot(s) filled the rest (${bots.join(', ') || 'none'})`);
 
     const extra = new Client('Extra', `pid-x${n}`);
     let joinErr = null;
     await extra.connect(seats[0].room).catch((e) => { joinErr = e.message; });
     await sleep(150);
-    assert(/full/i.test(joinErr || extra.errors.join(' ')),
-      `${n} player(s): an extra person is turned away`);
+    assert(/already started/i.test(joinErr || extra.errors.join(' ')),
+      `${n} player(s): a latecomer cannot join a game in progress`);
 
     seats.forEach((p) => { p.autoPlay = true; p.think(); });
     await waitFor(() => seats[0].state.phase === 'gameOver',
       `${n}-player game to finish`, 120000);
     assert(Math.max(...seats[0].state.score) >= 10,
-      `${n} player(s): played to ten (${seats[0].state.score.join('–')})`);
-    assert(seats.every((p) => p.errors.length === 0),
-      `${n} player(s): no rule errors`);
+      `${n} player(s): played to ten (${seats[0].state.score.join('-')})`);
+    assert(seats.every((p) => p.errors.length === 0), `${n} player(s): no rule errors`);
 
     await Promise.all(seats.map((p) => p.close()));
     await extra.close().catch(() => {});
   }
+
 } catch (err) {
   failures++;
   console.error('\nFAIL:', err.message);

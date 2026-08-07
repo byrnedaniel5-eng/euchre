@@ -5,7 +5,7 @@
 // hides behind an animation that was going to run anyway — and if it overruns,
 // the wheel simply rests a moment longer rather than the game stalling.
 
-import { TriviaGame, QUESTION_SECONDS, SPIN_MS, REVEAL_MS } from './engine.js';
+import { TriviaGame, QUESTION_SECONDS, SPIN_MS } from './engine.js';
 import { QuestionSource, CATEGORIES } from './questions.js';
 
 const FAST = process.env.EUCHRE_FAST === '1';
@@ -15,10 +15,9 @@ export default {
   name: 'Quiz Wheel',
   blurb: 'Spin for a category. Fastest right answer takes it.',
   icon: '🎡',
-  seats: 4,
-  defaultPlayers: 2,
+  seats: 8,
   minPlayers: 2,
-  maxPlayers: 4,
+  maxPlayers: 8,
   usesBots: false,
 
   options: {
@@ -70,6 +69,12 @@ export default {
         game.spin(seat);
         return;
 
+      case 'nextQuestion':
+        if (game.phase !== 'reveal') throw new Error('the question is not over');
+        // Everyone reads the answer before the wheel comes back round.
+        if (ctx.markReady(seat)) game.afterReveal();
+        return;
+
       case 'newGame':
         if (game.phase !== 'gameOver') throw new Error('game is not over');
         ctx.restart();
@@ -97,12 +102,8 @@ export default {
         run: () => game.endQuestion('time'),
       };
     }
-    if (game.phase === 'reveal') {
-      // Long enough to read the answer. Nobody is rushed past anything: the
-      // next screen waits on a person tapping the wheel.
-      return { delay: FAST ? 200 : REVEAL_MS, run: () => game.afterReveal() };
-    }
-    return null; // toSpin and gameOver wait on the players
+    // reveal, toSpin and gameOver all wait on the players.
+    return null;
   },
 
   CATEGORIES,

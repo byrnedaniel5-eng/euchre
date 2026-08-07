@@ -154,6 +154,8 @@ try {
   const code = await evaluate(`document.getElementById('room-code').textContent`);
 
   const p2 = socketPlayer(code, 'Ben');
+  await until(`!document.getElementById('lobby-start').disabled`, 10000);
+  await evaluate(`document.getElementById('lobby-start').click(); true`);
   check(await until(`!document.getElementById('game-draw').hidden`), 'the drawing screen opens');
   check(await evaluate(`document.getElementById('game-euchre').hidden`),
     'the euchre screen stays hidden');

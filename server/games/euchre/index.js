@@ -22,7 +22,6 @@ export default {
   blurb: 'Trick-taking to ten. Bots fill any empty seat.',
   icon: '♠',
   seats: 4,
-  defaultPlayers: 2,
   minPlayers: 1,
   maxPlayers: 4,
   usesBots: true,

@@ -142,6 +142,8 @@ try {
   check(await until(`!document.getElementById('lobby').hidden`), 'lobby appears');
   const code = await evaluate(`document.getElementById('room-code').textContent`);
   const p2 = socketPlayer(code, 'Ben');
+  await until(`!document.getElementById('lobby-start').disabled`, 10000);
+  await evaluate(`document.getElementById('lobby-start').click(); true`);
   check(await until(`!document.getElementById('game-trivia').hidden`), 'the quiz screen opens');
 
   console.log('\n2. the wheel waits for you to tap it');
@@ -197,9 +199,36 @@ try {
     'the right option is highlighted behind it');
   await shot('trivia-5-reveal');
 
+  console.log('\n4b. moving on takes both of you');
+  check(await evaluate(`!document.getElementById('ov-btn').hidden`),
+    'the reveal offers a next-question button');
+  check(await evaluate(`/next question|see the result/i.test(
+    document.getElementById('ov-btn').textContent)`), 'labelled for what comes next');
+  check(await evaluate(`document.getElementById('ov-leave').offsetHeight > 0`),
+    'and still carries a way out from under it');
+
+  await evaluate(`document.getElementById('ov-btn').click(); true`);
+  check(await until(`document.getElementById('ov-btn').disabled`),
+    'pressing it waits rather than advancing on its own');
+  check(await until(`/waiting/i.test(document.getElementById('ov-btn').textContent)`),
+    'and says who it is waiting for');
+
+  p2.act({ kind: 'nextQuestion' });
+  check(await until(`document.getElementById('overlay').hidden`, 15000),
+    'once both have pressed, the reveal clears');
+  check(await until(`!document.getElementById('wheel-stage').hidden`),
+    'and the wheel comes back round');
+  const segs = await evaluate(`document.querySelectorAll('#wheel .wseg i').length`);
+  check(segs === 8, `every wheel segment carries an icon (${segs})`);
+  check(await evaluate(`document.getElementById('tv-category').textContent === ''`),
+    'and the last question category is not left hanging over an unspun wheel');
+  await shot('trivia-6-back-to-wheel');
+
   console.log('\n5. you can leave from the overlay');
   await evaluate(`window.confirm = () => true;
-                  document.getElementById('ov-leave').click(); true`);
+                  document.querySelector('#game-trivia .menu-btn').click(); true`);
+  await sleep(200);
+  await evaluate(`document.getElementById('leave-game').click(); true`);
   check(await until(`!document.getElementById('home').hidden`), 'back to the landing page');
 
   console.log('\n6. no layout or script errors');

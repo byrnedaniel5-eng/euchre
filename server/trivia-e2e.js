@@ -149,7 +149,7 @@ class Client {
       const t = setTimeout(() => reject(new Error('join timed out')), 10000);
       this.ws.on('open', () => this.ws.send(JSON.stringify({
         type: 'join', playerId: this.playerId, name: this.name, room,
-        game: 'trivia', players: opts.players, options: opts.options,
+        game: 'trivia', options: opts.options,
       })));
       this.ws.on('message', (raw) => {
         const m = JSON.parse(raw);
@@ -161,6 +161,7 @@ class Client {
     });
   }
   act(action) { this.ws.send(JSON.stringify({ type: 'action', action })); }
+  start() { this.ws.send(JSON.stringify({ type: 'start' })); }
   close() { return new Promise((r) => { this.ws.once('close', r); this.ws.close(); }); }
 }
 
@@ -200,6 +201,10 @@ try {
   await a.connect(null, { players: 2, options: { questions: '5' } });
   const b = new Client('Ben', 'pid-tv-b');
   await b.connect(a.room);
+  await waitFor(() => a.state?.phase === 'lobby' && b.state?.phase === 'lobby',
+    'both clients to see the lobby');
+  assert(a.state.youAreHost && !b.state.youAreHost, 'the room maker hosts');
+  a.start();
   await waitFor(() => a.state && a.state.phase !== 'lobby', 'game start');
   assert(a.state.game === 'trivia', 'the room reports the trivia game');
   assert(a.state.questionCount === 5, 'five questions as chosen');
@@ -238,7 +243,12 @@ try {
   assert(a.state.revealed.nextSpinner === (wonBy !== null ? wonBy : 1),
     `the wheel is promised to the right player (fastest was ${wonBy})`);
 
-  await waitFor(() => a.state.phase === 'toSpin', 'the reveal to clear itself', 15000);
+  a.act({ kind: 'nextQuestion' });
+  await sleep(250);
+  assert(a.state.phase === 'reveal', 'one player pressing does not leave the reveal');
+  assert((b.state.ready || []).includes(a.seat), 'the other player sees who is ready');
+  b.act({ kind: 'nextQuestion' });
+  await waitFor(() => a.state.phase === 'toSpin', 'the wheel to come back round', 15000);
   const holder = a.state.spinner === a.seat ? a : b;
   const other = holder === a ? b : a;
   assert(a.state.spinner === (wonBy !== null ? wonBy : 1),
@@ -258,6 +268,9 @@ try {
     if (a.state.phase === 'question') {
       if (a.state.yourAnswer === null) a.act({ kind: 'answer', choice: 0 });
       if (b.state.yourAnswer === null) b.act({ kind: 'answer', choice: 1 });
+    } else if (a.state.phase === 'reveal') {
+      a.act({ kind: 'nextQuestion' });
+      b.act({ kind: 'nextQuestion' });
     } else if (a.state.phase === 'toSpin') {
       (a.state.spinner === a.seat ? a : b).act({ kind: 'spin' });
     }
@@ -267,7 +280,7 @@ try {
   assert(a.state.scores.length >= 2, `final scores ${a.state.scores.slice(0, 2).join('–')}`);
   // The driver polls state and can fire a stale spin or a duplicate answer;
   // both are refused correctly, which is the point. Anything else is a bug.
-  const expected = /already answered|not your spin|wheel is not ready/i;
+  const expected = /already answered|not your spin|wheel is not ready|question is not over/i;
   const unexpected = a.errors.concat(b.errors).filter((e) => !expected.test(e));
   assert(unexpected.length === 0, `no unexpected errors (${unexpected.slice(0, 3).join('; ')})`);
 

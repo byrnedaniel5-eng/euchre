@@ -254,10 +254,13 @@ try {
 
   console.log('\n3. partner joins, game starts');
   const p2 = scriptedPlayer(code, 'Sam');
-  await sleep(1500);
-  check(await cdp.eval(`!document.getElementById('game-euchre').hidden`), 'game screen took over');
-  check(await cdp.eval(`document.querySelectorAll('#hand .card').length`) === 5,
-    'five cards in hand');
+  // The host starts it now; a full lobby no longer deals on its own.
+  check(await until(`!document.getElementById('lobby-start').disabled`, 10000),
+    'the start button lights up once the second player is in');
+  await cdp.eval(`document.getElementById('lobby-start').click(); true`);
+  check(await until(`!document.getElementById('game-euchre').hidden`), 'game screen took over');
+  check(await until(`[5, 6].includes(document.querySelectorAll('#hand .card').length)`),
+    'a hand is dealt');
   const seatTags = await cdp.eval(
     `[...document.querySelectorAll('.seat .tag')].map(t => t.textContent)`);
   check(seatTags.some((t) => t.includes('You')), `seats labelled (${seatTags.join(' | ')})`);

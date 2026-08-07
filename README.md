@@ -45,8 +45,8 @@ comments.
 Euchre for one to four people, with bots filling whatever seats are left.
 First team to ten.
 
-Pick how many people are playing when you create the game; everyone else joins
-with a four-letter code. People take seats in join order and bots take the
+Everyone joins the lobby with a four-letter code and the host starts when the
+room is full enough. Whoever is in at that moment is in the game. People take seats in join order and bots take the
 rest, so the table works out as:
 
 | People | Seats | Result |
@@ -139,6 +139,9 @@ a rejoin the client had not seen any turn yet.
 
 ## Quiz Wheel
 
+Each segment carries an icon, so the colours mean something. After every
+question you both press **Next question** before the wheel comes back round.
+
 **Whoever gets a question right spins the wheel for the next one.** They tap it
 themselves; everyone else waits and watches it turn. The first spin of a game
 goes to whoever made the room, and if nobody gets a question right the wheel
@@ -179,10 +182,15 @@ npm install
 npm start          # http://localhost:3000
 ```
 
-Open it, enter a name, choose how many people are playing, and hit **Start a
-new game**. Send everyone else the four-letter code (the **Copy invite link**
-button uses the phone share sheet if there is one). The game deals as soon as
-every human seat is filled — a one-player game skips the lobby entirely.
+Open it, enter a name, pick a game and hit **Open a lobby**. Send everyone else
+the four-letter code (the **Copy invite link** button uses the phone share
+sheet if there is one), then press **Start** when everyone is in.
+
+Nobody picks a headcount up front. The table size is simply however many people
+are in the lobby when the host starts: euchre fills the remaining seats with
+bots and shows you which ones it would add, while the drawing and trivia games
+just play with whoever turned up, two to eight. Seats freeze at that moment, so
+a latecomer is turned away rather than appearing mid-hand.
 
 ## Putting it online
 

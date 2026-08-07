@@ -130,7 +130,7 @@ class Client {
       const t = setTimeout(() => reject(new Error('join timed out')), 10000);
       this.ws.on('open', () => this.ws.send(JSON.stringify({
         type: 'join', playerId: this.playerId, name: this.name, room,
-        game: 'draw', players: opts.players, options: opts.options,
+        game: 'draw', options: opts.options,
       })));
       this.ws.on('message', (raw) => {
         const m = JSON.parse(raw);
@@ -144,6 +144,7 @@ class Client {
     });
   }
   act(action) { this.ws.send(JSON.stringify({ type: 'action', action })); }
+  start() { this.ws.send(JSON.stringify({ type: 'start' })); }
   close() { return new Promise((r) => { this.ws.once('close', r); this.ws.close(); }); }
 }
 
@@ -172,6 +173,10 @@ try {
   await a.connect(null, { players: 2, options: { turns: '2' } });
   const b = new Client('Ben', 'pid-draw-b');
   await b.connect(a.room);
+  await waitFor(() => a.state?.phase === 'lobby' && b.state?.phase === 'lobby',
+    'both clients to see the lobby');
+  assert(a.state.youAreHost && !b.state.youAreHost, 'the room maker hosts');
+  a.start();
   await waitFor(() => a.state && a.state.phase !== 'lobby', 'game start');
   assert(a.state.game === 'draw', 'the room reports the drawing game');
   assert(a.state.totalTurns === 4, 'two players, two turns each');

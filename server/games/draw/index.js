@@ -15,10 +15,9 @@ export default {
   name: 'Draw It',
   blurb: 'One of you draws, the rest guess against the clock.',
   icon: '✏️',
-  seats: 4,
-  defaultPlayers: 2,
+  seats: 8,
   minPlayers: 2,
-  maxPlayers: 4,
+  maxPlayers: 8,
   usesBots: false,
 
   options: {

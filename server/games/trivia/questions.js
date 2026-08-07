@@ -14,14 +14,14 @@ const BUFFER_TARGET = 5; // questions fetched per call, to hide latency
 
 /** The wheel. Eight is as many segments as a phone can read at a glance. */
 export const CATEGORIES = [
-  { id: 9, name: 'General', color: '#3fa8c9' },
-  { id: 11, name: 'Film', color: '#c2569b' },
-  { id: 12, name: 'Music', color: '#e0722c' },
-  { id: 15, name: 'Games', color: '#6f7fe0' },
-  { id: 17, name: 'Science', color: '#43a86b' },
-  { id: 22, name: 'Geography', color: '#2f8fd8' },
-  { id: 23, name: 'History', color: '#b8813a' },
-  { id: 21, name: 'Sport', color: '#cc4f52' },
+  { id: 9, name: 'General', color: '#3fa8c9', icon: '💡' },
+  { id: 11, name: 'Film', color: '#c2569b', icon: '🎬' },
+  { id: 12, name: 'Music', color: '#e0722c', icon: '🎵' },
+  { id: 15, name: 'Games', color: '#6f7fe0', icon: '🎮' },
+  { id: 17, name: 'Science', color: '#43a86b', icon: '🔬' },
+  { id: 22, name: 'Geography', color: '#2f8fd8', icon: '🌍' },
+  { id: 23, name: 'History', color: '#b8813a', icon: '🏛️' },
+  { id: 21, name: 'Sport', color: '#cc4f52', icon: '⚽' },
 ];
 
 export const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || CATEGORIES[0];

@@ -24,7 +24,14 @@
     const slice = 360 / categories.length;
     const stops = categories.map((c, i) =>
       `${c.color} ${i * slice}deg ${(i + 1) * slice}deg`).join(', ');
-    $('wheel').style.background = `conic-gradient(from -${slice / 2}deg, ${stops})`;
+    const el = $('wheel');
+    el.style.background = `conic-gradient(from -${slice / 2}deg, ${stops})`;
+    // An icon per segment, so the colours mean something. They ride round with
+    // the wheel and point outwards the way markings on a real one do, which
+    // leaves whichever lands under the pointer sitting upright.
+    el.innerHTML = categories.map((c, i) =>
+      `<span class="wseg" style="--a:${i * slice}deg" title="${ctx?.escapeHtml?.(c.name) || c.name}">` +
+      `<i>${c.icon || '?'}</i></span>`).join('');
     paintedWheel = true;
   }
 
@@ -52,7 +59,12 @@
     // Hold the name back while the wheel is turning — otherwise the header
     // gives away where it is going to land before it lands.
     const cat = s.categories.find((x) => x.id === s.category);
-    $('tv-category').textContent = (cat && s.phase !== 'spinning') ? cat.name : '';
+    // Named only while its question is live. Showing it during the spin gives
+    // away the landing, and showing it while waiting to spin leaves the last
+    // question's category sitting over a wheel that has not turned yet.
+    const naming = s.phase === 'question' || s.phase === 'reveal';
+    $('tv-category').textContent = (cat && naming)
+      ? `${cat.icon || ''} ${cat.name}`.trim() : '';
     renderScores();
     renderClock();
 
@@ -200,10 +212,26 @@
         : `${state.names[r.nextSpinner]} spins next`;
       $('ov-tricks').textContent = `${scoreLine} — ${next}`;
 
-      // No button: the reveal clears itself, and the wheel screen behind it
-      // waits on a person. Leaving is still reachable.
+      // Everyone reads the answer before the wheel comes back round.
+      const ready = state.ready || [];
+      const iAmReady = ready.includes(ctx.seat);
+      const waiting = Array.from({ length: state.humans }, (_, i) => i)
+        .filter((i) => i !== ctx.seat && !ready.includes(i));
+      const waitText = waiting.length === 1
+        ? `Waiting for ${state.names[waiting[0]]}…`
+        : `Waiting for ${waiting.length} others…`;
+
       const btn = $('ov-btn');
-      btn.hidden = true;
+      btn.hidden = false;
+      btn.disabled = iAmReady;
+      btn.textContent = iAmReady
+        ? (waiting.length ? waitText : 'Next…')
+        : (state.index >= state.questionCount ? 'See the result' : 'Next question');
+      btn.onclick = () => {
+        btn.disabled = true;
+        btn.textContent = waiting.length ? waitText : 'Next…';
+        ctx.act({ kind: 'nextQuestion' });
+      };
       return;
     }
 

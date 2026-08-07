@@ -41,7 +41,6 @@
   let pendingJoin = null;
   let catalogue = [];
   let chosenGame = store.get('game', 'euchre') || 'euchre';
-  let playerCount = store.get('playerCount', 2) || 2;
   let gameOptions = store.get('gameOptions', {}) || {};
 
   const ctx = {
@@ -80,6 +79,9 @@
         active?.reset?.(ctx);
       } else if (msg.type === 'state') {
         state = msg.state;
+        // Seats shuffle down when somebody leaves a lobby, so trust the state
+        // over whatever seat we were given when we joined.
+        if (typeof state.yourSeat === 'number') mySeat = state.yourSeat;
         render();
       } else if (msg.type === 'chat') {
         addChat(msg.entry);
@@ -119,23 +121,10 @@
 
   const gameDef = () => catalogue.find((g) => g.id === chosenGame) || catalogue[0];
 
-  const PLAYER_HINTS = {
-    euchre: {
-      1: 'Just you and 3 bots. Your partner sits across from you.',
-      2: 'Two people on opposite teams, each partnered by a bot.',
-      3: 'Three people and 1 bot. The bot partners whoever joins second.',
-      4: 'Four people, no bots.',
-    },
-    draw: {
-      2: 'One draws, one guesses, swapping every turn.',
-      3: 'One draws, two race to guess it first.',
-      4: 'One draws, three race to guess it first.',
-    },
-    trivia: {
-      2: 'Head to head. Same question, fastest right answer takes it.',
-      3: 'Three of you racing the same question.',
-      4: 'Four of you racing the same question.',
-    },
+  const SETUP_HINTS = {
+    euchre: 'One to four people. Bots fill whatever seats are left.',
+    draw: 'Two to eight people. No bots — somebody has to draw.',
+    trivia: 'Two to eight people, all racing the same question.',
   };
 
   function renderHome() {
@@ -153,14 +142,8 @@
     $('setup-name').textContent = def.name;
     $('setup-blurb').textContent = def.blurb;
 
-    // Clamp the table size to what this game allows.
-    playerCount = Math.min(def.maxPlayers, Math.max(def.minPlayers, playerCount));
-    const counts = [];
-    for (let n = def.minPlayers; n <= def.maxPlayers; n++) counts.push(n);
-    $('opt-players').innerHTML = counts
-      .map((n) => `<button data-v="${n}"${n === playerCount ? ' class="on"' : ''}>${n}</button>`)
-      .join('');
-    $('players-hint').textContent = (PLAYER_HINTS[def.id] || {})[playerCount] || '';
+    $('players-hint').textContent = SETUP_HINTS[def.id]
+      || `${def.minPlayers} to ${def.maxPlayers} players.`;
 
     // Option rows come from the server, so a new game needs no client changes.
     const opts = def.options || {};
@@ -185,13 +168,6 @@
     showScreen('setup');
   };
   $('setup-back').onclick = () => showScreen('home');
-  $('opt-players').onclick = (e) => {
-    const v = Number(e.target.closest('button')?.dataset.v);
-    if (!v) return;
-    playerCount = v;
-    store.set('playerCount', v);
-    renderHome();
-  };
   $('game-options').onclick = (e) => {
     const btn = e.target.closest('button');
     const row = e.target.closest('[data-opt]');
@@ -215,7 +191,6 @@
       // Table size, game and its options belong to the room, so only the
       // person creating it gets a say; everyone else inherits what they join.
       pendingJoin.game = chosenGame;
-      pendingJoin.players = playerCount;
       pendingJoin.options = gameOptions;
     }
     $('join-error').hidden = true;
@@ -277,15 +252,34 @@
     if (state.phase === 'lobby') {
       showScreen('lobby');
       $('room-code').textContent = state.room;
-      const inSoFar = state.seated.filter(Boolean).length;
-      const total = state.humans ?? 2;
-      const missing = total - inSoFar;
-      document.querySelector('#lobby h2').textContent =
-        missing === 1 ? 'Waiting for one more' : `Waiting for ${missing} more`;
-      const here = state.seated.map((ok, s) => (ok ? state.names[s] : null))
-        .filter(Boolean).join(', ');
-      $('lobby-status').textContent =
-        missing > 0 ? `${inSoFar} of ${total} here — ${here}` : 'Starting…';
+      $('lobby-title').textContent = state.gameName || 'Lobby';
+
+      const rows = state.players.map((p) => `
+        <div class="lp${p.connected ? '' : ' offline'}">
+          <b>${escapeHtml(p.seat === mySeat ? `${p.name} (you)` : p.name)}</b>
+          ${p.host ? '<span class="tagpill">HOST</span>' : ''}
+          ${p.connected ? '' : '<span class="tagpill">AWAY</span>'}
+        </div>`);
+      // Show the bots that would fill the table, so the host can see what
+      // starting now would actually give them.
+      for (let i = 0; i < state.bots; i++) {
+        rows.push('<div class="lp bot"><b>Bot</b></div>');
+      }
+      $('lobby-players').innerHTML = rows.join('');
+
+      const here = state.players.length;
+      const startBtn = $('lobby-start');
+      startBtn.hidden = !state.youAreHost;
+      startBtn.disabled = !state.canStart;
+      startBtn.textContent = state.canStart
+        ? `Start with ${here} player${here === 1 ? '' : 's'}` +
+          (state.bots ? ` and ${state.bots} bot${state.bots === 1 ? '' : 's'}` : '')
+        : `Need ${state.minPlayers} players`;
+
+      $('lobby-status').textContent = state.youAreHost
+        ? (state.canStart ? 'Start whenever you are ready.'
+                          : `Waiting for ${state.minPlayers - here} more.`)
+        : `Waiting for the host to start. Room for ${state.capacity - here} more.`;
       return;
     }
 
@@ -373,6 +367,7 @@
     showScreen('home');
   }
 
+  $('lobby-start').onclick = () => send({ type: 'start' });
   $('lobby-cancel').onclick = leaveGame;
   // Every overlay covers the menu button, so without this there is no way out
   // of a finished game except a refresh — which rejoins the same room.

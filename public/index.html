@@ -49,25 +49,28 @@
     </div>
     <p class="tagline" id="setup-blurb"></p>
 
-    <label>How many people are playing?</label>
-    <div class="seg spread" id="opt-players"></div>
     <p class="hint" id="players-hint"></p>
 
     <div id="game-options"></div>
 
-    <button id="create" class="primary">Start a new game</button>
+    <button id="create" class="primary">Open a lobby</button>
   </div>
 </section>
 
 <!-- ----------------------------------------------------------- lobby -->
 <section id="lobby" class="screen" hidden>
   <div class="join-card">
-    <h2>Waiting for one more</h2>
-    <p class="tagline">Send them this code — or the link.</p>
+    <h2 id="lobby-title">Lobby</h2>
+    <p class="tagline">Share this code, then start when everyone is in.</p>
     <div id="room-code" class="room-code">····</div>
-    <button id="copy-link" class="primary">Copy invite link</button>
-    <button id="lobby-cancel" class="ghost wide">Cancel</button>
-    <p id="lobby-status" class="tagline"></p>
+    <button id="copy-link" class="ghost wide">Copy invite link</button>
+
+    <label>Who's here</label>
+    <div id="lobby-players" class="lobby-players"></div>
+    <p class="hint" id="lobby-status"></p>
+
+    <button id="lobby-start" class="primary" hidden>Start game</button>
+    <button id="lobby-cancel" class="ghost wide">Leave lobby</button>
   </div>
 </section>
 

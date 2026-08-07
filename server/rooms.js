@@ -1,9 +1,14 @@
 // The room layer: everything that is true of any game played on this site.
 //
-// Room codes, seat allocation, rejoining by stored id, leaving, chat, the
-// ready gate between rounds, keep-alives and reaping. It knows nothing about
-// cards or drawings — it asks the game module what to build, what each seat
-// may see, and whether anything should happen on a timer.
+// Room codes, seats, rejoining by stored id, leaving, chat, the ready gate,
+// keep-alives and reaping. It knows nothing about cards or drawings — it asks
+// the game module what to build, what each seat may see, and whether anything
+// should happen on a timer.
+//
+// A room is a lobby first. People join it up to the game's capacity, and the
+// person who created it decides when to start. Only then is the table size
+// fixed: euchre fills whatever seats are left with bots, while the drawing and
+// trivia games simply play with however many turned up.
 
 import { randomUUID } from 'node:crypto';
 import { games, getGame } from './registry.js';
@@ -14,8 +19,18 @@ const ROOM_TTL = 6 * 60 * 60 * 1000; // rooms survive a long lunch break
 /** @type {Map<string, Room>} */
 export const rooms = new Map();
 
+/** Seats with a person in them, in order. */
+export const occupiedSeats = (room) =>
+  room.seats.map((p, i) => (p ? i : -1)).filter((i) => i >= 0);
+
+/**
+ * Seats the game considers human. Before the start that is whoever is here;
+ * afterwards it is frozen, so bots cannot appear or vanish mid-game.
+ */
 export const humanSeats = (room) =>
-  Array.from({ length: room.humanCount }, (_, i) => i);
+  (room.started
+    ? Array.from({ length: room.humanCount }, (_, i) => i)
+    : occupiedSeats(room));
 
 function newRoomCode() {
   let code;
@@ -27,16 +42,19 @@ function newRoomCode() {
   return code;
 }
 
-export function createRoom({ gameId, humanCount, options }) {
+export function createRoom({ gameId, options }) {
   const mod = getGame(gameId);
   if (!mod) throw new Error(`no such game: ${gameId}`);
-  const wanted = Number(humanCount) || mod.defaultPlayers || mod.minPlayers;
   const code = newRoomCode();
   const room = {
     code,
     gameId: mod.id,
     mod,
-    humanCount: Math.min(mod.maxPlayers, Math.max(mod.minPlayers, wanted | 0)),
+    capacity: mod.seats,
+    // Set when the host starts; null while it is still a lobby.
+    humanCount: null,
+    started: false,
+    hostId: null,
     options: options && typeof options === 'object' ? options : {},
     seats: Array.from({ length: mod.seats }, () => null),
     game: null,
@@ -51,12 +69,25 @@ export function createRoom({ gameId, humanCount, options }) {
   return room;
 }
 
-const allSeated = (room) => humanSeats(room).every((s) => room.seats[s]);
+const isHostSeat = (room, seat) =>
+  !!room.seats[seat] && room.seats[seat].playerId === room.hostId;
+
+export const canStart = (room) =>
+  !room.started && occupiedSeats(room).length >= room.mod.minPlayers;
+
+/** Squash gaps so seats stay 0..n-1 — euchre's teams depend on the order. */
+function compact(room) {
+  const people = room.seats.filter(Boolean);
+  for (let i = 0; i < room.seats.length; i++) room.seats[i] = people[i] || null;
+}
 
 export function startGame(room) {
   clearTimeout(room.timer);
   room.timer = null;
   room.ready.clear();
+  compact(room);
+  room.humanCount = Math.min(room.mod.maxPlayers, occupiedSeats(room).length);
+  room.started = true;
   room.game = room.mod.create(room);
   advance(room);
 }
@@ -70,21 +101,35 @@ const send = (ws, msg) => {
 const connectionFlags = (room) =>
   humanSeats(room).map((s) => !!(room.seats[s] && room.seats[s].sockets.size > 0));
 
-function lobbyState(room) {
+function lobbyState(room, seat) {
+  const here = occupiedSeats(room);
   return {
     phase: 'lobby',
     game: room.gameId,
+    gameName: room.mod.name,
     room: room.code,
-    humans: room.humanCount,
-    names: room.mod.seatNames(room),
-    seated: humanSeats(room).map((s) => !!room.seats[s]),
+    capacity: room.capacity,
+    minPlayers: room.mod.minPlayers,
+    maxPlayers: room.mod.maxPlayers,
+    usesBots: !!room.mod.usesBots,
+    players: here.map((s) => ({
+      seat: s,
+      name: room.seats[s].name,
+      host: isHostSeat(room, s),
+      connected: room.seats[s].sockets.size > 0,
+    })),
+    youAreHost: isHostSeat(room, seat),
+    canStart: canStart(room),
+    // What the table would look like if it started right now.
+    bots: room.mod.usesBots ? Math.max(0, room.mod.seats - here.length) : 0,
   };
 }
 
 export function stateFor(room, seat) {
-  if (!room.game) return lobbyState(room);
+  if (!room.game) return { ...lobbyState(room, seat), yourSeat: seat };
   return {
     ...room.mod.viewFor(room.game, seat, room),
+    yourSeat: seat,
     game: room.gameId,
     room: room.code,
     humans: room.humanCount,
@@ -95,7 +140,7 @@ export function stateFor(room, seat) {
 
 export function broadcast(room) {
   room.lastActivity = Date.now();
-  for (const seat of humanSeats(room)) {
+  for (const seat of occupiedSeats(room)) {
     const p = room.seats[seat];
     if (!p) continue;
     const state = stateFor(room, seat);
@@ -105,7 +150,7 @@ export function broadcast(room) {
 
 /** Send anything else (ink, notices) to every seat except optionally one. */
 export function broadcastRaw(room, msg, exceptSeat = null) {
-  for (const seat of humanSeats(room)) {
+  for (const seat of occupiedSeats(room)) {
     if (seat === exceptSeat) continue;
     for (const ws of room.seats[seat]?.sockets || []) send(ws, msg);
   }
@@ -176,10 +221,20 @@ export function applyAction(room, seat, action) {
   const result = room.mod.applyAction(room.game, seat, action, actionContext(room));
   // 'restarted': startGame already advanced, don't do it twice.
   // 'quiet': high-frequency traffic like drawing strokes, which the module has
-  // already pushed out itself. Broadcasting full state per finger movement
-  // would swamp the socket for no gain.
+  // already pushed out itself.
   if (result === 'restarted' || result === 'quiet') return;
   advance(room);
+}
+
+/** The host says go. Everyone in the lobby at this moment is in the game. */
+export function hostStart(room, seat) {
+  if (room.started) throw new Error('the game has already started');
+  if (!isHostSeat(room, seat)) throw new Error('only the host can start the game');
+  const here = occupiedSeats(room).length;
+  if (here < room.mod.minPlayers) {
+    throw new Error(`${room.mod.name} needs at least ${room.mod.minPlayers} players`);
+  }
+  startGame(room);
 }
 
 // ------------------------------------------------------------------ joining
@@ -189,27 +244,27 @@ export function joinRoom(ws, msg) {
   const name = String(msg.name || '').trim().slice(0, 14) || 'Player';
 
   let room;
+  let creating = false;
   if (msg.room) {
     room = rooms.get(String(msg.room).toUpperCase().trim());
     if (!room) return { error: 'No game with that code.' };
   } else {
     try {
-      room = createRoom({
-        gameId: msg.game || 'euchre',
-        humanCount: msg.players,
-        options: msg.options,
-      });
+      room = createRoom({ gameId: msg.game || 'euchre', options: msg.options });
+      creating = true;
     } catch {
       return { error: 'That game is not available.' };
     }
   }
 
-  const seats = humanSeats(room);
-  let seat = seats.find((s) => room.seats[s]?.playerId === playerId);
-  if (seat === undefined) seat = seats.find((s) => !room.seats[s]);
-  if (seat === undefined) {
-    const n = room.humanCount;
-    return { error: `That game is full (${n} ${n === 1 ? 'player' : 'players'}).` };
+  // Rejoin the seat this player already holds, otherwise take a free one.
+  let seat = room.seats.findIndex((p) => p?.playerId === playerId);
+  if (seat < 0) {
+    // Seats are frozen once play begins: only the people who were here may
+    // come back, and only into their own seat.
+    if (room.started) return { error: 'That game has already started.' };
+    seat = room.seats.findIndex((p) => !p);
+    if (seat < 0) return { error: `That lobby is full (${room.capacity} players).` };
   }
 
   if (room.seats[seat]) {
@@ -218,9 +273,10 @@ export function joinRoom(ws, msg) {
   } else {
     room.seats[seat] = { playerId, name, sockets: new Set([ws]) };
   }
+  if (creating || !room.hostId) room.hostId = playerId;
   if (room.game) room.mod.renameSeats(room.game, room.mod.seatNames(room));
 
-  return { room, seat, playerId };
+  return { room, seat, playerId, isHost: room.hostId === playerId };
 }
 
 /**
@@ -229,6 +285,7 @@ export function joinRoom(ws, msg) {
  */
 export function leaveRoom(room, seat, exceptWs = null) {
   const who = room.seats[seat]?.name || 'A player';
+  const wasHost = isHostSeat(room, seat);
   // Close this player's other tabs, but never the socket that asked to leave —
   // it is mid-message, and closing it here trips a libuv assertion.
   for (const s of room.seats[seat]?.sockets || []) {
@@ -241,25 +298,26 @@ export function leaveRoom(room, seat, exceptWs = null) {
   clearTimeout(room.timer);
   room.timer = null;
 
-  if (!humanSeats(room).some((s) => room.seats[s])) {
+  if (!occupiedSeats(room).length) {
     rooms.delete(room.code);
     return;
   }
-  // Whoever is left keeps the code so a replacement can join.
+
+  // Whoever is left goes back to the lobby holding the same code, so somebody
+  // can take the empty seat rather than everyone starting over.
+  compact(room);
   room.game = null;
+  room.started = false;
+  room.humanCount = null;
+  if (wasHost) room.hostId = room.seats[occupiedSeats(room)[0]].playerId;
   broadcastChat(room, { from: 'Table', seat: -1, text: `${who} left.`, ts: Date.now() });
   broadcast(room);
-}
-
-export function maybeStart(room) {
-  if (!room.game && allSeated(room)) startGame(room);
-  else broadcast(room);
 }
 
 export function reapRooms() {
   const now = Date.now();
   for (const [code, room] of rooms) {
-    const live = humanSeats(room).some((s) => room.seats[s]?.sockets.size > 0);
+    const live = occupiedSeats(room).some((s) => room.seats[s]?.sockets.size > 0);
     if (!live && now - room.lastActivity > ROOM_TTL) {
       clearTimeout(room.timer);
       rooms.delete(code);

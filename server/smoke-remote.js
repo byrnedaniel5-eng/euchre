@@ -82,6 +82,7 @@ try {
   const b = new Client('SmokeB', 'smoke-b-' + Date.now());
   await b.connect(a.room);
   check(b.seat === 1, 'second player took seat 1');
+  a.ws.send(JSON.stringify({ type: 'start' }));
   await waitFor(() => a.state && a.state.phase !== 'lobby', 'game start');
   check(a.state.you.hand.length === 5, 'cards dealt over the wire');
 
