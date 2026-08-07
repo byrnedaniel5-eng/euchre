@@ -171,6 +171,33 @@
   </div>
 </section>
 
+<!-- ---------------------------------------------------------- trivia -->
+<section id="game-trivia" class="screen game-screen" hidden>
+  <header id="tv-hud">
+    <div class="turn-pill"><span id="tv-index">1/10</span></div>
+    <div id="tv-category" class="tv-category"></div>
+    <div class="clock" id="tv-clock-pill">
+      <span id="tv-clock">20</span>
+      <span id="tv-worth"></span>
+    </div>
+    <button class="icon-btn menu-btn" aria-label="Menu">⋯</button>
+  </header>
+
+  <div id="tv-scores" class="draw-scores"></div>
+
+  <div id="wheel-stage" class="wheel-stage">
+    <div class="wheel-pointer"></div>
+    <div id="wheel" class="wheel"></div>
+    <div id="wheel-label" class="wheel-label"></div>
+  </div>
+
+  <div id="tv-question" class="tv-question" hidden>
+    <p id="tv-text" class="tv-text"></p>
+    <div id="tv-options" class="tv-options"></div>
+    <p id="tv-status" class="hint"></p>
+  </div>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -225,6 +252,7 @@
 <script src="app.js"></script>
 <script src="games/euchre.js"></script>
 <script src="games/draw.js"></script>
+<script src="games/trivia.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

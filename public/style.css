@@ -1022,3 +1022,100 @@ input:focus { border-color: var(--accent); }
   border: none;
 }
 .ov-leave:active { color: var(--ink); }
+
+/* ================================================================== trivia */
+
+body[data-theme="trivia"] {
+  --felt-1: #0d1c24;
+  --felt-2: #143a46;
+  --panel: #133039;
+  --ink: #eaf6f8;
+  --muted: #92b3bd;
+  --gold: #ffcb47;
+  --accent: #2fb6c4;
+  background:
+    radial-gradient(820px 560px at 50% -5%, rgba(47, 182, 196, 0.22), transparent 68%),
+    linear-gradient(180deg, #14323d, #0d1c24 70%);
+}
+
+#game-trivia { gap: 8px; }
+#tv-hud { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.tv-category {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- the wheel */
+
+.wheel-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wheel {
+  width: min(74vw, 260px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 30px rgba(0, 0, 0, 0.35);
+  /* The segments are painted from the category list at runtime. */
+  transition: transform 2.4s cubic-bezier(0.17, 0.72, 0.16, 1);
+}
+.wheel-pointer {
+  position: absolute;
+  top: calc(50% - min(37vw, 130px) - 16px);
+  width: 0;
+  height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-top: 18px solid var(--gold);
+  z-index: 2;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+.wheel-label {
+  position: absolute;
+  bottom: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------- the question */
+
+.tv-question { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.tv-text {
+  margin: 0;
+  padding: 14px 12px;
+  font-size: 17px;
+  line-height: 1.35;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+}
+.tv-options { display: flex; flex-direction: column; gap: 8px; }
+.tv-options button {
+  width: 100%;
+  padding: 14px 12px;
+  font-size: 15px;
+  text-align: left;
+  line-height: 1.3;
+}
+.tv-options button.chosen { border-color: var(--accent); background: rgba(47, 182, 196, 0.26); }
+.tv-options button.right { border-color: #56bd8a; background: rgba(86, 189, 138, 0.32); }
+.tv-options button.wrong { border-color: var(--danger); background: rgba(217, 83, 79, 0.26); }
+.tv-options button:disabled { opacity: 1; }
+.tv-options button.faded:disabled { opacity: 0.45; }
+
+.ds .streak { font-size: 10px; color: var(--gold); }

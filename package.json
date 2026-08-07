@@ -1,20 +1,21 @@
 {
   "name": "game-night",
   "version": "1.0.0",
-  "description": "Euchre and Draw It, for phones on a video call",
+  "description": "Euchre, Draw It and Quiz Wheel, for phones on a video call",
   "type": "module",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node server/selftest.js && node server/e2e.js && node server/draw-e2e.js && node server/leavecheck.js",
+    "test": "node server/selftest.js && node server/e2e.js && node server/draw-e2e.js && node server/trivia-e2e.js && node server/leavecheck.js",
     "test:ui": "node server/uicheck.js",
     "test:draw-ui": "node server/draw-ui.js",
     "test:tags": "node server/tagcheck.js",
     "test:cards": "node server/cardshots.js",
     "smoke": "node server/smoke-remote.js",
     "tune": "node server/tune.js",
-    "ladder": "node server/ladder.js"
+    "ladder": "node server/ladder.js",
+    "test:trivia-ui": "node server/trivia-ui.js"
   },
   "dependencies": {
     "express": "^4.19.2",

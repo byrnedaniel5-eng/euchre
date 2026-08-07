@@ -140,8 +140,14 @@ export function advance(room) {
   if (!room.game) return;
   const next = room.mod.step(room.game, room);
   if (!next) return;
-  schedule(room, Math.max(0, next.delay), () => {
-    next.run();
+  // run() may be async — the trivia game fetches its question inside the wheel
+  // spin. Awaiting keeps the state broadcast after the work, not before it.
+  schedule(room, Math.max(0, next.delay), async () => {
+    try {
+      await next.run();
+    } catch (err) {
+      console.error(`[${room.code}] step failed:`, err);
+    }
     advance(room);
   });
 }

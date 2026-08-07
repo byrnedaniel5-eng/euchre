@@ -131,6 +131,11 @@
       3: 'One draws, two race to guess it first.',
       4: 'One draws, three race to guess it first.',
     },
+    trivia: {
+      2: 'Head to head. Same question, fastest right answer takes it.',
+      3: 'Three of you racing the same question.',
+      4: 'Four of you racing the same question.',
+    },
   };
 
   function renderHome() {
@@ -241,7 +246,12 @@
 
   // ------------------------------------------------------------- screens
 
-  const SCREENS = ['home', 'setup', 'lobby', 'game-euchre', 'game-draw'];
+  // Built from the registered renderers rather than listed by hand: a game
+  // whose section is missing here never becomes visible at all, and every
+  // symptom of that shows up somewhere else entirely.
+  const FIXED_SCREENS = ['home', 'setup', 'lobby'];
+  const allScreens = () =>
+    [...new Set([...FIXED_SCREENS, ...Object.values(RENDERERS).map((r) => r.root)])];
 
   // Each screen carries a look, so it is obvious at a glance which game you
   // are in — the hub is not a card table, and the drawing game is not green.
@@ -254,7 +264,7 @@
   }
 
   function showScreen(id) {
-    for (const s of SCREENS) $(s).hidden = s !== id;
+    for (const s of allScreens()) if ($(s)) $(s).hidden = s !== id;
     if (id === 'home') setTheme('home');
     else if (id === 'setup') setTheme(chosenGame);
     else if (id === 'lobby') setTheme(state?.game || chosenGame);

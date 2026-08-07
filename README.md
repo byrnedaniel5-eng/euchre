@@ -4,12 +4,14 @@ Games for people on their own phones, usually while already on a video call.
 The app holds the private information — your hand, your prompt — and gets out
 of the way; the talking is the game.
 
-Two games so far:
+Three games so far:
 
 - **Euchre** — trick-taking to ten, one to four people, bots filling any empty
   seat.
 - **Draw It** — one person draws a prompt, everyone else races to guess it.
   Two to four people, no bots.
+- **Quiz Wheel** — spin for a category, then everyone races the same
+  multiple-choice question. Two to four people.
 
 ## Looks
 
@@ -134,6 +136,35 @@ whose screen turns off drops its socket and rejoins, and the rejoin replays the
 board *before* the first state arrives. Clearing the canvas on "the turn is not
 the one I last saw" wiped the replayed drawing every single time, because after
 a rejoin the client had not seen any turn yet.
+
+## Quiz Wheel
+
+Between questions the wheel spins for one of eight categories. Everyone then
+sees the same question and four options, and answers independently against a
+20-second clock. A correct answer is worth 100 down to 20 as the clock runs,
+and the **first** correct answer takes a further 30 — being fastest is the
+whole point, and without the bonus two quick answers score almost the same.
+
+The category is decided by the server before the wheel starts turning; the
+state carries the chosen segment and a nonce, and each phone rotates to it.
+Both therefore agree on the result no matter how their animations drift, and a
+state resend after a reconnect does not re-spin the wheel.
+
+Because both players face the same question independently, the roles are
+symmetric — there is no drawer/guesser asymmetry to reason about, and none of
+the scoring problems the drawing game had.
+
+Questions come from the [Open Trivia Database](https://opentdb.com) — free, no
+key, CC BY-SA 4.0. Requested as base64 so nothing arrives HTML-entity encoded,
+with a session token per room so the same question never comes round twice.
+The correct index is **withheld from the state** until the reveal, so it cannot
+be read out of the socket mid-question.
+
+That API is a third party behind a free-tier host, so every category also ships
+a bundled fallback set. If the fetch fails, times out or returns an error code,
+the game takes a bundled question and carries on rather than stalling. The
+network round trip happens inside the wheel spin, so it hides behind an
+animation that was going to run anyway.
 
 ## Running it locally
 
