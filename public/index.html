@@ -201,6 +201,23 @@
   </div>
 </section>
 
+<!-- ---------------------------------------------------------- runner -->
+<section id="game-runner" class="screen game-screen" hidden>
+  <header id="run-hud">
+    <div class="turn-pill"><span id="run-round">1/3</span></div>
+    <div id="run-time" class="run-time">0.0s</div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="run-scores" class="draw-scores"></div>
+  <div id="run-stage">
+    <canvas id="run-canvas"></canvas>
+    <div id="run-countdown" class="run-countdown" hidden></div>
+    <div id="run-status" class="run-status"></div>
+  </div>
+  <p class="hint">Tap to hop &middot; hold to jump further</p>
+  <p class="run-tip">Turn your phone sideways for a bigger view</p>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -256,6 +273,8 @@
 <script src="games/euchre.js"></script>
 <script src="games/draw.js"></script>
 <script src="games/trivia.js"></script>
+<script src="games/runner-level.js"></script>
+<script src="games/runner.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

@@ -13,14 +13,17 @@
   let state = null;
   let ctx = null;
   let clockTimer = null;
-  let paintedWheel = false;
   let lastNonce = null;
   let turns = 0; // accumulated rotation, so the wheel only ever spins forwards
 
   // --------------------------------------------------------------- wheel
 
   function paintWheel(categories) {
-    if (paintedWheel) return;
+    if (!categories || !categories.length) return;
+    // Check the DOM, not a flag. A one-shot boolean stays true even if that
+    // first paint produced nothing, which leaves the wheel blank for good.
+    const el0 = $('wheel');
+    if (el0.querySelectorAll('.wseg').length === categories.length) return;
     const slice = 360 / categories.length;
     const stops = categories.map((c, i) =>
       `${c.color} ${i * slice}deg ${(i + 1) * slice}deg`).join(', ');
@@ -32,7 +35,6 @@
     el.innerHTML = categories.map((c, i) =>
       `<span class="wseg" style="--a:${i * slice}deg" title="${ctx?.escapeHtml?.(c.name) || c.name}">` +
       `<i>${c.icon || '?'}</i></span>`).join('');
-    paintedWheel = true;
   }
 
   /** Rotate so the chosen segment sits under the pointer at the top. */

@@ -125,6 +125,7 @@
     euchre: 'One to four people. Bots fill whatever seats are left.',
     draw: 'Two to eight people. No bots — somebody has to draw.',
     trivia: 'Two to eight people, all racing the same question.',
+    runner: 'Two to eight people on the same course, all running at once.',
   };
 
   function renderHome() {
@@ -230,7 +231,8 @@
 
   // Each screen carries a look, so it is obvious at a glance which game you
   // are in — the hub is not a card table, and the drawing game is not green.
-  const THEME_COLOR = { home: '#12141d', euchre: '#12261c', draw: '#17102a' };
+  const THEME_COLOR = { home: '#12141d', euchre: '#12261c', draw: '#17102a',
+    trivia: '#0d1c24', runner: '#170d1e' };
 
   function setTheme(name) {
     document.body.dataset.theme = name;

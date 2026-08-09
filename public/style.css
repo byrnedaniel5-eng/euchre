@@ -1175,3 +1175,79 @@ body[data-theme="trivia"] {
   line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
+
+/* =================================================================== runner */
+
+body[data-theme="runner"] {
+  --felt-1: #170d1e;
+  --felt-2: #3a1526;
+  --panel: #26132a;
+  --ink: #fdeee6;
+  --muted: #c19a9a;
+  --gold: #ffb03a;
+  --accent: #ff5a28;
+  background:
+    radial-gradient(900px 520px at 50% 108%, rgba(255, 90, 40, 0.35), transparent 66%),
+    linear-gradient(180deg, #2a1230, #170d1e 62%);
+}
+
+#game-runner { gap: 8px; }
+#run-hud { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.run-time {
+  flex: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+/* The world is a landscape 32x18. Letting a portrait column stretch it just
+   letterboxes a thin band into a tall empty box, so the stage takes the
+   world's own shape and the leftover height goes to the scoreboard. Held
+   sideways, this fills the screen properly. */
+#run-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 32 / 18;
+  max-height: 100%;
+  margin: auto 0;
+  flex: 0 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #150b1c;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+#game-runner { justify-content: center; }
+.run-tip { text-align: center; font-size: 12px; color: var(--muted); margin: 0; }
+#run-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+
+.run-countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 84px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.run-status {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  pointer-events: none;
+}

@@ -11,7 +11,9 @@ Three games so far:
 - **Draw It** — one person draws a prompt, everyone else races to guess it.
   Two to four people, no bots.
 - **Quiz Wheel** — spin for a category, then everyone races the same
-  multiple-choice question. Two to four people.
+  multiple-choice question. Two to eight people.
+- **Lava Run** — a side-scrolling race over collapsing platforms. Tap to hop,
+  hold to jump further, and stay ahead of the closing edge. Two to eight.
 
 ## Looks
 
@@ -174,6 +176,47 @@ a bundled fallback set. If the fetch fails, times out or returns an error code,
 the game takes a bundled question and carries on rather than stalling. The
 network round trip happens inside the wheel spin, so it hides behind an
 animation that was going to run anyway.
+
+## Lava Run
+
+Everyone runs the same course at the same moment, on their own phone. Tap to
+hop, hold to jump further. Fall in the lava, clip a rock overhead, or let the
+closing left edge catch you and you are out; the last one going takes the
+round.
+
+**It is the only game here that runs its own clock.** The server hands out a
+seed and a start time and nothing else — every client builds the identical
+course from that seed and runs its own physics at its own frame rate. Positions
+go out ten times a second as their own small message, never inside the game
+state, purely so you can see each other. That is what makes 60fps workable over
+a phone connection; the cost is that a player's distance is taken on trust,
+which is the right trade for a game you play with your partner.
+
+Because the camera is a pure function of elapsed time, everyone shares one
+camera — so your opponent's reported position is on your screen, in your world,
+running beside you.
+
+The viewport is a fixed size in world units, so a taller phone cannot see
+further ahead than a shorter one.
+
+### Two things the tests forced
+
+**It has to be a game, not a timer.** The first version had no overhead
+hazards, and airborne movement is faster than grounded — so jumping was free
+and more of it was always better. Holding the screen down beat careful play and
+survived as long as a perfect run. The rock slabs exist to make an over-long
+jump fatal, which is what turns "how long do you hold" into a decision.
+`runner-e2e.js` asserts that mashing the screen loses badly, currently 18s
+against 53s.
+
+**The course has to be possible.** A procedural runner that can emit an
+unclearable gap is worthless and you would only find out mid-game.
+`solver.js` plays each course by one-step lookahead — trying a spread of hold
+lengths and simulating each to the next landing — so the tests can tell "this
+course cannot be beaten" apart from "my formula was wrong". The first version
+of the hazards failed that on 29 courses out of 30; slabs are now hung above
+the arc the jump actually requires, and the suite fails if any course has a
+moment where every possible jump kills you.
 
 ## Running it locally
 
