@@ -184,11 +184,16 @@
     p.x += (p.grounded ? PHYS.runSpeed : PHYS.airSpeed) * dt;
 
     if (!p.grounded) {
+      const wasY = p.y;
       p.vy -= PHYS.gravity * dt;
       p.y += p.vy * dt;
       const ground = level.groundAt(p.x);
-      // Only land when falling, so you can jump up through nothing.
-      if (ground && p.vy <= 0 && p.y <= ground.y) {
+      // Land only when falling *through* the surface from above. Without the
+      // `wasY` half, crossing into a platform's span at any height below its
+      // top counts as a landing — so walking off a ledge and drifting over a
+      // narrow gap teleports you up onto the next platform through its side,
+      // and never jumping becomes a viable way to play.
+      if (ground && p.vy <= 0 && wasY >= ground.y && p.y <= ground.y) {
         p.y = ground.y;
         p.vy = 0;
         p.grounded = true;

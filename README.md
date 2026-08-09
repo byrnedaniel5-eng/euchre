@@ -209,6 +209,15 @@ jump fatal, which is what turns "how long do you hold" into a decision.
 `runner-e2e.js` asserts that mashing the screen loses badly, currently 18s
 against 53s.
 
+**You have to be able to fall.** Landing was "am I at or below the platform
+top", with no check that you had been above it a moment earlier. So walking off
+a ledge and drifting over a narrow gap snapped you up onto the next platform
+through its side, and never jumping at all was a way to play — for thirty
+seconds, as it turned out. Nothing caught it because the solver always jumps.
+Never jumping now drops you in the first gap at three seconds, and the suite
+asserts both that and that you cannot arrive below a platform's lip and end up
+standing on it.
+
 **The course has to be possible.** A procedural runner that can emit an
 unclearable gap is worthless and you would only find out mid-game.
 `solver.js` plays each course by one-step lookahead — trying a spread of hold

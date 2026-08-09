@@ -82,6 +82,45 @@ console.log('\n3. it is a game, not a timer');
   assert(median(holdForever) < median(skilled) * 0.5,
     `mashing the screen loses badly (${median(holdForever).toFixed(1)}s vs ` +
     `${median(skilled).toFixed(1)}s)`);
+
+  // And the opposite mistake. Landing used to be "am I at or below the
+  // platform top", with no check that you had been above it — so walking off
+  // a ledge and drifting over a narrow gap snapped you up onto the next
+  // platform through its side, and never jumping was a way to play. Nothing
+  // caught it because the solver always jumps.
+  const neverJump = [];
+  const causes = {};
+  for (let seed = 1; seed <= 30; seed++) {
+    const level = R.makeLevel(seed);
+    const p = R.newPlayer(level);
+    let t = 0;
+    while (!p.dead && t < 200) { R.step(p, level, { down: false }, 1 / 120, t); t += 1 / 120; }
+    neverJump.push(t);
+    causes[p.cause] = (causes[p.cause] || 0) + 1;
+  }
+  assert(Math.max(...neverJump) < 8,
+    `never jumping drops you in the first gap (worst ${Math.max(...neverJump).toFixed(1)}s)`);
+  assert(causes.lava === 30, `and it is the lava that gets you (${JSON.stringify(causes)})`);
+}
+
+console.log('\n3b. you cannot land through the side of a platform');
+{
+  // Straight at the flank of a raised platform, below its top.
+  const level = R.makeLevel(4242);
+  level.extendTo(400);
+  const target = level.platforms.find((q, i) => i > 0 && q.y > level.platforms[i - 1].y + 1);
+  if (!target) {
+    assert(false, 'expected the course to contain a step up');
+  } else {
+    const p = R.newPlayer(level);
+    p.x = target.x - 0.05;
+    p.y = target.y - 1.5;   // below its surface
+    p.vy = -1;              // and falling
+    p.grounded = false;
+    R.step(p, level, { down: false }, 1 / 120, 5);
+    assert(!p.grounded && p.y < target.y,
+      `arriving below the lip does not put you on top of it (y ${p.y.toFixed(2)} vs top ${target.y.toFixed(2)})`);
+  }
 }
 
 console.log('\n4. the viewport is the same for everyone');
