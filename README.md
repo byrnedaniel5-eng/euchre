@@ -13,7 +13,8 @@ Three games so far:
 - **Quiz Wheel** — spin for a category, then everyone races the same
   multiple-choice question. Two to eight people.
 - **Lava Run** — a side-scrolling race over collapsing platforms. Tap to hop,
-  hold to jump further, and stay ahead of the closing edge. Two to eight.
+  hold to jump further, and stay ahead of the closing edge. One to eight —
+  alone it is a time trial, which is also how you learn a course.
 
 ## Looks
 
@@ -179,7 +180,11 @@ animation that was going to run anyway.
 
 ## Lava Run
 
-Everyone runs the same course at the same moment, on their own phone. Tap to
+Everyone runs the same course at the same moment, on their own phone. **You can
+run it alone**, in which case it is a time trial against the closing edge and
+the result screen reports your time and your best rather than announcing you as
+the winner of a race you were the only entrant in.
+ Tap to
 hop, hold to jump further. Fall in the lava, clip a rock overhead, or let the
 closing left edge catch you and you are out; the last one going takes the
 round.

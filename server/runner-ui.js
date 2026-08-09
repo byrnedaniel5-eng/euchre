@@ -197,6 +197,27 @@ try {
   await shot('runner-3-result');
 
   console.log('\n6. no layout or script errors');
+  console.log(String.fromCharCode(10) + '5b. and you can run it alone');
+  await evaluate(`window.confirm = () => true;
+                  document.getElementById('ov-leave').click(); true`);
+  await until(`!document.getElementById('home').hidden`);
+  await evaluate(`document.querySelector('[data-game="runner"]').click();
+                  document.getElementById('create').click(); true`);
+  check(await until(`!document.getElementById('lobby').hidden`), 'a solo lobby opens');
+  check(await until(`!document.getElementById('lobby-start').disabled`),
+    'and one player is enough to start');
+  await evaluate(`document.getElementById('lobby-start').click(); true`);
+  check(await until(`!document.getElementById('game-runner').hidden`), 'the course opens');
+  check(await until(`document.getElementById('run-countdown').hidden`, 12000),
+    'the countdown clears and the run begins');
+  check(await until(`!document.getElementById('overlay').hidden`, 90000),
+    'the solo run ends and is scored');
+  const soloTitle = await evaluate(`document.getElementById('ov-title').textContent`);
+  check(/^[0-9]+\.[0-9]+s$/.test(soloTitle),
+    `alone it reports the time rather than a winner ("${soloTitle}")`);
+  await shot('runner-4-solo');
+
+  console.log(String.fromCharCode(10) + '6. no layout or script errors');
   const overflow = await evaluate(
     `document.documentElement.scrollWidth - document.documentElement.clientWidth`);
   check(overflow <= 0, `no horizontal overflow at 390px (${overflow}px)`);

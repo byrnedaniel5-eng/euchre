@@ -253,6 +253,28 @@ try {
   assert(unexpected.length === 0, `no unexpected errors (${unexpected.slice(0, 2).join('; ')})`);
 
   await Promise.all([a.close(), b.close()]);
+
+  console.log('\n9. a solo time trial');
+  const solo = new Client('Solo', 'pid-run-solo');
+  await solo.connect(null, { options: { rounds: '1' } });
+  await waitFor(() => solo.state?.phase === 'lobby', 'the lobby');
+  assert(solo.state.canStart === true, 'one player is enough to start Lava Run');
+  assert(solo.state.bots === 0, 'and no bots are offered — there are none');
+  solo.start();
+  await waitFor(() => solo.state.phase !== 'lobby', 'the round to open');
+  await waitFor(() => solo.state.phase === 'running', 'the off', 10000);
+
+  await sleep(1200);
+  solo.act({ kind: 'died', seconds: 0.9, distance: 30, cause: 'caught' });
+  await waitFor(() => solo.state.phase === 'results', 'the run to be scored');
+  assert(solo.state.revealed.winners.includes(solo.seat),
+    'a solo run scores rather than hanging');
+  assert(solo.state.bestSeconds[solo.seat] > 0,
+    `and records a best time (${solo.state.bestSeconds[solo.seat].toFixed(1)}s)`);
+  solo.act({ kind: 'nextRound' });
+  await waitFor(() => solo.state.phase === 'gameOver', 'the trial to end');
+  assert(solo.errors.length === 0, `no errors playing alone (${solo.errors.join('; ')})`);
+  await solo.close();
 } catch (err) {
   failures++;
   console.error('\nFAIL:', err.message);

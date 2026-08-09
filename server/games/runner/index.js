@@ -14,7 +14,9 @@ export default {
   blurb: 'Tap to jump, hold to jump further. Last one out of the lava wins.',
   icon: '🌋',
   seats: 8,
-  minPlayers: 2,
+  // Solo is a time trial against the closing edge, which is a real game in
+  // itself and the only way to practise a course without an audience.
+  minPlayers: 1,
   maxPlayers: 8,
   usesBots: false,
 

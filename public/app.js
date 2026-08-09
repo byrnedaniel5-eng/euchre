@@ -125,7 +125,7 @@
     euchre: 'One to four people. Bots fill whatever seats are left.',
     draw: 'Two to eight people. No bots — somebody has to draw.',
     trivia: 'Two to eight people, all racing the same question.',
-    runner: 'Two to eight people on the same course, all running at once.',
+    runner: 'One to eight. Alone it is a time trial; together you run side by side.',
   };
 
   function renderHome() {

@@ -241,14 +241,21 @@
   function renderOverlay() {
     const ov = $('overlay');
 
+    const solo = state.humans === 1;
+
     if (state.phase === 'gameOver') {
       const best = Math.max(...state.wins.slice(0, state.humans));
       ov.hidden = false;
-      $('ov-title').textContent = state.wins[ctx.seat] === best ? 'You win!' : 'Good run';
-      $('ov-body').textContent = state.names.slice(0, state.humans)
-        .map((n, i) => `${i === ctx.seat ? 'You' : n}: ${state.wins[i]}`).join(' · ');
-      $('ov-tricks').textContent = state.names.slice(0, state.humans)
-        .map((n, i) => `best ${state.bestSeconds[i].toFixed(1)}s`).join(' · ');
+      $('ov-title').textContent = solo
+        ? `Best run ${state.bestSeconds[ctx.seat].toFixed(1)}s`
+        : (state.wins[ctx.seat] === best ? 'You win!' : 'Good run');
+      $('ov-body').textContent = solo
+        ? `${state.rounds} round${state.rounds === 1 ? '' : 's'} done`
+        : state.names.slice(0, state.humans)
+            .map((n, i) => `${i === ctx.seat ? 'You' : n}: ${state.wins[i]}`).join(' · ');
+      $('ov-tricks').textContent = solo ? ''
+        : state.names.slice(0, state.humans)
+            .map((n, i) => `best ${state.bestSeconds[i].toFixed(1)}s`).join(' · ');
       $('ov-btn').hidden = false;
       $('ov-btn').disabled = false;
       $('ov-btn').textContent = 'Play again';
@@ -260,17 +267,23 @@
       const r = state.revealed;
       const mine = r.results.find((x) => x.seat === ctx.seat);
       ov.hidden = false;
-      $('ov-title').textContent = r.winners.includes(ctx.seat)
-        ? `You lasted longest — ${mine.seconds.toFixed(1)}s`
-        : `${r.winners.map((s) => state.names[s]).join(' & ')} lasted longest`;
+      // Alone there is nobody to have beaten, so report the run itself.
+      const best = state.bestSeconds[ctx.seat] || 0;
+      $('ov-title').textContent = solo
+        ? `${mine ? mine.seconds.toFixed(1) : '0.0'}s`
+        : (r.winners.includes(ctx.seat)
+            ? `You lasted longest — ${mine.seconds.toFixed(1)}s`
+            : `${r.winners.map((s) => state.names[s]).join(' & ')} lasted longest`);
       $('ov-body').textContent = mine
         ? `You ${CAUSE[mine.cause] || 'went out'} at ${mine.seconds.toFixed(1)}s`
         : '';
-      $('ov-tricks').textContent = r.results
-        .slice()
-        .sort((a, b) => b.seconds - a.seconds)
-        .map((x) => `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} ${x.seconds.toFixed(1)}s`)
-        .join(' · ');
+      $('ov-tricks').textContent = solo
+        ? (best > 0 ? `Best so far ${best.toFixed(1)}s` : '')
+        : r.results
+            .slice()
+            .sort((a, b) => b.seconds - a.seconds)
+            .map((x) => `${x.seat === ctx.seat ? 'You' : state.names[x.seat]} ${x.seconds.toFixed(1)}s`)
+            .join(' · ');
 
       const ready = state.ready || [];
       const iAmReady = ready.includes(ctx.seat);
