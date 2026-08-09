@@ -217,6 +217,32 @@ try {
     `alone it reports the time rather than a winner ("${soloTitle}")`);
   await shot('runner-4-solo');
 
+  console.log(String.fromCharCode(10) + '5c. never touching the screen must drop you in');
+  // A fresh page rather than leaving and re-creating in place: the point of
+  // this check is the physics, and it should not be able to fail for reasons
+  // to do with navigating between games.
+  await cdp('Page.navigate', { url: `http://127.0.0.1:${PORT}/` });
+  await sleep(1400);
+  await evaluate(`document.getElementById('name').value = 'Idle';
+                  document.querySelector('[data-game="runner"]').click();
+                  document.getElementById('create').click(); true`);
+  check(await until(`!document.getElementById('lobby-start').disabled`, 15000),
+    'a solo lobby is ready');
+  await evaluate(`document.getElementById('lobby-start').click(); true`);
+  check(await until(`!document.getElementById('game-runner').hidden`), 'the course opens');
+
+  // Never send a single pointer event. The runner must go in the first gap.
+  const idleBody = await until(`(() => {
+    const ov = document.getElementById('overlay');
+    const body = document.getElementById('ov-body').textContent;
+    return (!ov.hidden && /at [0-9.]+s/.test(body)) ? body : '';
+  })()`, 40000);
+  check(!!idleBody, `the run ends without a single tap ("${idleBody}")`);
+  const idleSecs = parseFloat((String(idleBody).match(/([0-9.]+)s/) || [])[1] || '999');
+  check(/lava/i.test(String(idleBody)), `and it is the lava that gets you ("${idleBody}")`);
+  check(idleSecs < 8, `at the first gap, not thirty seconds later (${idleSecs}s)`);
+  await shot('runner-5-idle');
+
   console.log(String.fromCharCode(10) + '6. no layout or script errors');
   const overflow = await evaluate(
     `document.documentElement.scrollWidth - document.documentElement.clientWidth`);

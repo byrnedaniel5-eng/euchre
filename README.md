@@ -220,8 +220,13 @@ a ledge and drifting over a narrow gap snapped you up onto the next platform
 through its side, and never jumping at all was a way to play — for thirty
 seconds, as it turned out. Nothing caught it because the solver always jumps.
 Never jumping now drops you in the first gap at three seconds, and the suite
-asserts both that and that you cannot arrive below a platform's lip and end up
-standing on it.
+asserts that, that you cannot arrive below a platform's lip and end up standing
+on it, and — in a real browser, from a fresh page — that a run with no input at
+all ends in the lava within a few seconds.
+
+That last one exists because the first version of it lied. It waited for the
+result overlay without checking the text had been rewritten, so it read the
+leftover result from the previous section and passed while proving nothing.
 
 **The course has to be possible.** A procedural runner that can emit an
 unclearable gap is worthless and you would only find out mid-game.

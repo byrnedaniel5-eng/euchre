@@ -321,6 +321,15 @@
     ghosts.set(msg.seat, { x: msg.x, y: msg.y, alive: msg.alive });
   }
 
+  // A window on the live simulation, for the browser tests. Reading it cannot
+  // change anything; it exists because a headless run otherwise has no way to
+  // see why a runner is or is not falling.
+  window.__runner = {
+    get me() { return me; },
+    get level() { return level; },
+    get held() { return held; },
+  };
+
   window.registerGame('runner', {
     root: 'game-runner',
     usesCards: false,
