@@ -201,8 +201,16 @@ Because the camera is a pure function of elapsed time, everyone shares one
 camera — so your opponent's reported position is on your screen, in your world,
 running beside you.
 
-The viewport is a fixed size in world units, so a taller phone cannot see
-further ahead than a shorter one.
+The view follows the runner at a fixed screen position, so how far you can see
+ahead never changes. It used to be pinned to the closing edge, which meant
+running well pushed you towards the right of the screen and left you less time
+to react — the better you played, the less you could see. The closing edge now
+slides in from the left instead, with a glow warning you while it is still just
+off screen.
+
+The viewport is a fixed size in world units, so a phone with a different screen
+cannot see further ahead than another. It is portrait, so it fills a phone held
+normally rather than letterboxing a landscape strip into a tall empty box.
 
 ### Two things the tests forced
 

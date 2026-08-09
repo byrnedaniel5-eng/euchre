@@ -19,19 +19,25 @@
 (() => {
   'use strict';
 
-  // `floor` is how much lava sits below the surface inside the view — without
-  // it y=0 lands exactly on the bottom edge and the lava is never seen.
-  const VIEW = { w: 32, h: 18, floor: 3.5 };
+  // Portrait, to fill a phone held normally. `floor` is how much lava sits
+  // below the surface inside the view — without it y=0 lands exactly on the
+  // bottom edge and the lava is never seen. `playerX` is where the runner sits
+  // on screen: the view follows them, so the distance you can see ahead is the
+  // same whether you are barely clinging on or streets ahead. Before this the
+  // view was pinned to the closing edge, which meant running well pushed you
+  // towards the right of the screen and gave you less time to react — the
+  // better you played, the less you could see.
+  const VIEW = { w: 24, h: 32, floor: 4, playerX: 7 };
 
   const PHYS = {
-    gravity: 60,          // units/s²
-    jumpMin: 16,          // a tap
-    jumpMax: 26,          // a full hold
-    holdSeconds: 0.28,    // how long a hold takes to reach jumpMax
+    gravity: 70,          // units/s²
+    jumpMin: 20,          // a tap
+    jumpMax: 34,          // a full hold
+    holdSeconds: 0.30,    // how long a hold takes to reach jumpMax
     runSpeed: 9,          // horizontal speed with your feet on something
     airSpeed: 12,         // horizontal speed while airborne — jumping gains ground
     lavaY: 0,
-    height: 1.4,          // head height, for the slabs overhead
+    height: 2.0,          // head height, for the slabs overhead
     startX: 10,           // how far ahead of the left edge you begin
     camStart: 8.5,        // the left edge creeps up on you from here
     camRamp: 0.10,   // units/s² — this is what eventually ends every run
@@ -58,7 +64,7 @@
   function makeLevel(seed) {
     const rng = makeRng(seed);
     // A generous opening platform, so nobody dies before they have looked up.
-    const platforms = [{ x: 0, w: 34, y: 4 }];
+    const platforms = [{ x: 0, w: 34, y: 9 }];
 
     // Slabs hanging over the start of some platforms. Without them the whole
     // game is solved by holding the screen down: airborne is faster than
@@ -75,9 +81,11 @@
 
         const gap = 2.4 + rng() * (1.6 + d * 2.4);
         const width = Math.max(4, 9 - d * 3.5 + rng() * 3);
-        const stepLimit = 1.2 + d * 1.8;
+        // A taller world: the portrait view has the room for real height, and
+        // without it most of the screen is empty sky.
+        const stepLimit = 2.2 + d * 3.0;
         let y = last.y + (rng() * 2 - 1) * stepLimit;
-        y = Math.max(2, Math.min(9, y));
+        y = Math.max(4, Math.min(23, y));
 
         const p = { x: last.x + last.w + gap, w: width, y };
         platforms.push(p);
@@ -94,7 +102,7 @@
             PHYS.jumpMin,
             (rise + 0.5 * PHYS.gravity * reach * reach) / reach);
           const apexAboveHere = (need * need) / (2 * PHYS.gravity) - rise;
-          const floor = apexAboveHere + PHYS.height + 2.0;
+          const floor = apexAboveHere + PHYS.height + 2.8;
 
           const clearance = Math.max(floor, 5.2 - d * 1.4 + rng() * 1.0);
           // If it has to hang that high it threatens nothing; skip it.

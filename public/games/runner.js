@@ -53,13 +53,13 @@
     };
   }
 
-  function draw(camX, t) {
+  function draw(viewX, edgeX, t) {
     const L = layout();
     g2.setTransform(L.dpr, 0, 0, L.dpr, 0, 0);
     g2.clearRect(0, 0, L.w, L.h);
 
     // World to screen. y is up in world units, down in canvas ones.
-    const sx = (x) => L.offX + (x - camX) * L.scale;
+    const sx = (x) => L.offX + (x - viewX) * L.scale;
     const sy = (y) => L.offY + (R.VIEW.h - R.VIEW.floor - y) * L.scale;
 
     // Sky, then lava glowing along the bottom.
@@ -81,7 +81,7 @@
     g2.lineWidth = Math.max(1, L.scale * 0.12);
     g2.beginPath();
     for (let i = 0; i <= 40; i++) {
-      const wx = camX + (i / 40) * R.VIEW.w;
+      const wx = viewX + (i / 40) * R.VIEW.w;
       const wob = Math.sin(wx * 0.7 + t * 3) * 0.14 + Math.sin(wx * 1.9 - t * 2) * 0.07;
       const px = sx(wx);
       const py = sy(R.PHYS.lavaY + wob);
@@ -89,7 +89,7 @@
     }
     g2.stroke();
 
-    const seen = level.visible(camX - 4, camX + R.VIEW.w + 6);
+    const seen = level.visible(viewX - 4, viewX + R.VIEW.w + 6);
 
     for (const p of seen.platforms) {
       const x = sx(p.x);
@@ -99,7 +99,7 @@
       g2.fillStyle = '#3b2f47';
       g2.fillRect(x, y, w, h);
       g2.fillStyle = '#6f5a7e';
-      g2.fillRect(x, y, w, Math.max(2, L.scale * 0.35));
+      g2.fillRect(x, y, w, Math.max(3, L.scale * 0.28));
     }
 
     for (const hz of seen.hazards) {
@@ -112,13 +112,30 @@
       g2.fillRect(x, yb - Math.max(2, L.scale * 0.3), w, Math.max(2, L.scale * 0.3));
     }
 
-    // The edge that is chasing you.
-    const edge = sx(camX);
-    const warn = g2.createLinearGradient(edge, 0, edge + L.scale * 4, 0);
-    warn.addColorStop(0, 'rgba(255, 90, 40, 0.85)');
-    warn.addColorStop(1, 'rgba(255, 90, 40, 0)');
-    g2.fillStyle = warn;
-    g2.fillRect(edge, L.offY, L.scale * 4, R.VIEW.h * L.scale);
+    // The edge that is chasing you. Draw the band where it actually is when
+    // that is on screen; once it is behind the left of the view, show a glow
+    // instead whose strength is how close it has got. Drawing both at once
+    // made a ten-unit lead look like a disaster.
+    const edge = sx(edgeX);
+    const lead = (me ? me.x : 0) - edgeX;
+    if (edge >= L.offX - L.scale) {
+      const warn = g2.createLinearGradient(edge, 0, edge + L.scale * 5, 0);
+      warn.addColorStop(0, 'rgba(255, 90, 40, 0.9)');
+      warn.addColorStop(1, 'rgba(255, 90, 40, 0)');
+      g2.fillStyle = warn;
+      g2.fillRect(Math.max(L.offX, edge), L.offY, L.scale * 5, R.VIEW.h * L.scale);
+    } else {
+      // Nothing until it is within a few units of the screen edge.
+      const behind = lead - R.VIEW.playerX;
+      const near = Math.max(0, Math.min(1, 1 - behind / 5));
+      if (near > 0.02) {
+        const glow = g2.createLinearGradient(L.offX, 0, L.offX + L.scale * 3, 0);
+        glow.addColorStop(0, `rgba(255, 70, 30, ${0.7 * near})`);
+        glow.addColorStop(1, 'rgba(255, 70, 30, 0)');
+        g2.fillStyle = glow;
+        g2.fillRect(L.offX, L.offY, L.scale * 3, R.VIEW.h * L.scale);
+      }
+    }
 
     // Everyone else, then you on top.
     for (const [seat, gh] of ghosts) {
@@ -151,7 +168,6 @@
 
     const t = (Date.now() - state.startAt) / 1000;
     const running = state.phase === 'running' && t >= 0;
-    const camX = R.cameraX(Math.max(0, t));
 
     if (running && me && !me.dead) {
       // Fixed steps, capped: a backgrounded tab must not teleport you.
@@ -174,7 +190,11 @@
     }
     lastFrame = now;
 
-    draw(camX, Math.max(0, t));
+    // The view follows the runner, so how far you can see ahead never changes.
+    // Pinning it to the closing edge instead meant that running well pushed you
+    // to the right of the screen and left you less time to react.
+    const viewX = (me ? me.x : R.PHYS.startX) - R.VIEW.playerX;
+    draw(viewX, R.cameraX(Math.max(0, t)), Math.max(0, t));
     renderHud(t);
   }
 

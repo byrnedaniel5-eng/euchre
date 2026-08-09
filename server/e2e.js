@@ -322,8 +322,11 @@ try {
       `${n}-player game to start`);
 
     assert(seats[0].state.humans === n, `${n} player(s): the table froze at ${n} humans`);
-    assert(seats.every((p) => p.state.you.hand.length === 5),
-      `${n} player(s): everyone is dealt five cards`);
+    // Five, or six for a dealer a bot has already ordered it up to — with bot
+    // delays collapsed for the tests, that can happen before this line runs.
+    assert(seats.every((p) => [5, 6].includes(p.state.you.hand.length)),
+      `${n} player(s): everyone is dealt a hand ` +
+      `(${seats.map((p) => p.state.you.hand.length).join(',')})`);
     assert(seats.every((p, i) => p.seat === i),
       `${n} player(s): people fill seats in join order`);
     const bots = seats[0].state.names.slice(n);

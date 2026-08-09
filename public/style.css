@@ -1202,14 +1202,13 @@ body[data-theme="runner"] {
   color: var(--gold);
 }
 
-/* The world is a landscape 32x18. Letting a portrait column stretch it just
-   letterboxes a thin band into a tall empty box, so the stage takes the
-   world's own shape and the leftover height goes to the scoreboard. Held
-   sideways, this fills the screen properly. */
+/* The stage takes the world's own shape, which is now portrait — so it fills a
+   phone held normally instead of letterboxing a thin landscape band into a
+   tall empty box. */
 #run-stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 32 / 18;
+  aspect-ratio: 24 / 32;
   max-height: 100%;
   margin: auto 0;
   flex: 0 0 auto;
