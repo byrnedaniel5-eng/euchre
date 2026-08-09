@@ -76,7 +76,7 @@ export class RunnerGame {
     const ceiling = Math.min(ROUND_CAP_SECONDS, Math.max(0, this.elapsed()) + 1);
     r.seconds = Math.max(0, Math.min(Number(seconds) || 0, ceiling));
     r.distance = Math.max(0, Number(distance) || 0);
-    r.cause = ['lava', 'ceiling', 'caught'].includes(cause) ? cause : 'lava';
+    r.cause = ['lava', 'ceiling'].includes(cause) ? cause : 'lava';
     this.bestSeconds[seat] = Math.max(this.bestSeconds[seat], r.seconds);
     this.pushLog(`${this.names[seat]} ${r.cause} at ${r.seconds.toFixed(1)}s`);
 

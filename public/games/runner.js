@@ -112,30 +112,17 @@
       g2.fillRect(x, yb - Math.max(2, L.scale * 0.3), w, Math.max(2, L.scale * 0.3));
     }
 
-    // The edge that is chasing you. Draw the band where it actually is when
-    // that is on screen; once it is behind the left of the view, show a glow
-    // instead whose strength is how close it has got. Drawing both at once
-    // made a ten-unit lead look like a disaster.
+    // The wall of lava at your heels. It sits a fixed distance back and no
+    // longer kills: with one speed everywhere nobody can fall behind, so an
+    // edge that killed could only ever be a clock that ended everyone at the
+    // same moment. It is pressure, and the thing that kills you is a mistake.
     const edge = sx(edgeX);
-    const lead = (me ? me.x : 0) - edgeX;
-    if (edge >= L.offX - L.scale) {
-      const warn = g2.createLinearGradient(edge, 0, edge + L.scale * 5, 0);
-      warn.addColorStop(0, 'rgba(255, 90, 40, 0.9)');
-      warn.addColorStop(1, 'rgba(255, 90, 40, 0)');
-      g2.fillStyle = warn;
-      g2.fillRect(Math.max(L.offX, edge), L.offY, L.scale * 5, R.VIEW.h * L.scale);
-    } else {
-      // Nothing until it is within a few units of the screen edge.
-      const behind = lead - R.VIEW.playerX;
-      const near = Math.max(0, Math.min(1, 1 - behind / 5));
-      if (near > 0.02) {
-        const glow = g2.createLinearGradient(L.offX, 0, L.offX + L.scale * 3, 0);
-        glow.addColorStop(0, `rgba(255, 70, 30, ${0.7 * near})`);
-        glow.addColorStop(1, 'rgba(255, 70, 30, 0)');
-        g2.fillStyle = glow;
-        g2.fillRect(L.offX, L.offY, L.scale * 3, R.VIEW.h * L.scale);
-      }
-    }
+    const wall = g2.createLinearGradient(edge - L.scale * 2, 0, edge + L.scale * 3.5, 0);
+    wall.addColorStop(0, 'rgba(255, 120, 40, 0.95)');
+    wall.addColorStop(0.45, 'rgba(226, 60, 20, 0.55)');
+    wall.addColorStop(1, 'rgba(226, 60, 20, 0)');
+    g2.fillStyle = wall;
+    g2.fillRect(L.offX, L.offY, Math.max(0, edge + L.scale * 3.5 - L.offX), R.VIEW.h * L.scale);
 
     // Everyone else, then you on top.
     for (const [seat, gh] of ghosts) {
@@ -193,8 +180,9 @@
     // The view follows the runner, so how far you can see ahead never changes.
     // Pinning it to the closing edge instead meant that running well pushed you
     // to the right of the screen and left you less time to react.
-    const viewX = (me ? me.x : R.PHYS.startX) - R.VIEW.playerX;
-    draw(viewX, R.cameraX(Math.max(0, t)), Math.max(0, t));
+    const here = me ? me.x : R.PHYS.startX;
+    const viewX = here - R.VIEW.playerX;
+    draw(viewX, here - R.PHYS.tideLag, Math.max(0, t));
     renderHud(t);
   }
 
@@ -332,7 +320,6 @@
   const CAUSE = {
     lava: 'fell in the lava',
     ceiling: 'hit the rock',
-    caught: 'were caught by the edge',
     survived: 'were still going',
   };
 

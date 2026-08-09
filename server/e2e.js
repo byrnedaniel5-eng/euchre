@@ -96,6 +96,15 @@ class Client {
     const a = s.you?.actions;
     if (!a) return;
 
+    // Act once per distinct situation. Anything that causes a broadcast —
+    // somebody reconnecting, a seat changing — re-delivers a state we have
+    // already played, and acting on it again produces a "not your turn" the
+    // server is right to refuse. That is a naive driver, not a bug.
+    const key = [s.handNumber, s.phase, s.turn, s.trick?.length ?? 0,
+      s.you?.hand?.length ?? 0, a.type].join('|');
+    if (this.lastActed === key) return;
+    this.lastActed = key;
+
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
     if (a.type === 'bid1') {

@@ -34,17 +34,33 @@
     jumpMin: 20,          // a tap
     jumpMax: 34,          // a full hold
     holdSeconds: 0.30,    // how long a hold takes to reach jumpMax
-    runSpeed: 9,          // horizontal speed with your feet on something
-    airSpeed: 12,         // horizontal speed while airborne — jumping gains ground
+    // One speed, in the air and on the ground alike. It used to be faster
+    // airborne, which made jumping gain ground on the closing edge — but it
+    // also meant the run sped up and slowed down under you for no visible
+    // reason. With a single speed nobody can fall behind, so the edge stops
+    // being a clock that ends everyone at the same instant.
+    speed: 9,
+    speedRamp: 80,        // seconds for the pace to double — the difficulty
     lavaY: 0,
     height: 2.0,          // head height, for the slabs overhead
     startX: 10,           // how far ahead of the left edge you begin
-    camStart: 8.5,        // the left edge creeps up on you from here
-    camRamp: 0.10,   // units/s² — this is what eventually ends every run
+    tideLag: 6,           // how far behind you the lava wall sits, in view
   };
 
-  /** Where the killing left edge is at time t. */
-  const cameraX = (t) => PHYS.camStart * t + 0.5 * PHYS.camRamp * t * t;
+  /** How fast everything moves at time t. It never stops rising. */
+  const speedAt = (t) => PHYS.speed * (1 + t / PHYS.speedRamp);
+
+  /** Distance covered by time t — the integral of the above. */
+  const distanceAt = (t) => PHYS.speed * (t + (t * t) / (2 * PHYS.speedRamp));
+
+  /** Roughly how fast you will be going by the time you reach x. */
+  const speedAtX = (x) => PHYS.speed * (1 + x / (PHYS.speed * PHYS.speedRamp * 1.6));
+
+  /** The furthest a single jump can carry you around there. */
+  const reachAt = (x) => (2 * PHYS.jumpMax / PHYS.gravity) * speedAtX(x);
+
+  /** Where the lava tide is: a fixed distance behind, pure pressure. */
+  const tideBehind = () => PHYS.tideLag;
 
   /** Small deterministic PRNG — same seed, same course, on every device. */
   function makeRng(seed) {
@@ -79,8 +95,14 @@
         if (last.x + last.w > x + VIEW.w * 2) return;
         const d = Math.min(1, (last.x + last.w) / 700); // 0 → 1 over ~700 units
 
-        const gap = 2.4 + rng() * (1.6 + d * 2.4);
-        const width = Math.max(4, 9 - d * 3.5 + rng() * 3);
+        // Gaps are a share of what a jump can actually clear at this point,
+        // and that share keeps climbing — so the course is unbounded but
+        // eventually unjumpable, which is what makes every run end on a
+        // mistake rather than on a timer.
+        const reach = reachAt(last.x + last.w);
+        const share = Math.min(0.95, 0.30 + d * 0.42 + rng() * 0.16);
+        const gap = Math.max(2.2, reach * share);
+        const width = Math.max(4.5, 10 - d * 3.5 + rng() * 3);
         // A taller world: the portrait view has the room for real height, and
         // without it most of the screen is empty sky.
         const stepLimit = 2.2 + d * 3.0;
@@ -96,11 +118,11 @@
         // slab above that — so it punishes a jump longer than necessary, and
         // nothing else.
         if (p.x > 60 && rng() < 0.3 + d * 0.5) {
-          const reach = (gap + 1.2) / PHYS.airSpeed;
+          const reachTime = (gap + 1.2) / speedAtX(p.x);
           const rise = p.y - last.y;
           const need = Math.max(
             PHYS.jumpMin,
-            (rise + 0.5 * PHYS.gravity * reach * reach) / reach);
+            (rise + 0.5 * PHYS.gravity * reachTime * reachTime) / reachTime);
           const apexAboveHere = (need * need) / (2 * PHYS.gravity) - rise;
           const floor = apexAboveHere + PHYS.height + 2.8;
 
@@ -189,7 +211,7 @@
       p.jumping = false;
     }
 
-    p.x += (p.grounded ? PHYS.runSpeed : PHYS.airSpeed) * dt;
+    p.x += speedAt(t) * dt;
 
     if (!p.grounded) {
       const wasY = p.y;
@@ -223,12 +245,12 @@
     } else if (p.y <= PHYS.lavaY) {
       p.dead = true;
       p.cause = 'lava';
-    } else if (p.x < cameraX(t)) {
-      p.dead = true;
-      p.cause = 'caught';
     }
     return p;
   }
 
-  globalThis.RunnerLevel = { VIEW, PHYS, cameraX, makeRng, makeLevel, newPlayer, step };
+  globalThis.RunnerLevel = {
+    VIEW, PHYS, speedAt, distanceAt, speedAtX, reachAt, tideBehind,
+    makeRng, makeLevel, newPlayer, step,
+  };
 })();

@@ -48,19 +48,28 @@ console.log('\n2. every course can actually be run');
 {
   const runs = [];
   for (let seed = 1; seed <= 40; seed++) runs.push(solve(seed));
-  const unwinnable = runs.reduce((n, r) => n + r.stuck, 0);
   const secs = runs.map((r) => r.seconds);
 
-  assert(unwinnable === 0,
-    `no moment where every possible jump kills you (${unwinnable} across 40 courses)`);
+  // The course is deliberately unbounded and gets harder forever, so it does
+  // eventually become unjumpable — that is how a run ends now that nothing is
+  // chasing you. What must not happen is it running out of options early.
+  const earlyTrap = runs.filter((r) => r.firstStuckAt !== null && r.firstStuckAt < 25);
+  assert(earlyTrap.length === 0,
+    `no course runs out of options in the first 25s (${earlyTrap.length} of 40 did)`);
   assert(Math.min(...secs) > 25,
     `good play survives a long time (worst course ${Math.min(...secs).toFixed(1)}s)`);
   assert(runs.every((r) => r.seconds < ROUND_CAP_SECONDS),
-    'and every run ends by itself, so a round always finishes');
+    'and every run still ends by itself, so a round always finishes');
+
+  // Two good runs must not finish level. When the edge was a clock, every
+  // survivor died at the same instant and the round was a coin toss.
+  const spread = Math.max(...secs) - Math.min(...secs);
+  assert(spread > 10,
+    `different courses end at different times, so good runs do not tie ` +
+    `(${Math.min(...secs).toFixed(1)}s to ${Math.max(...secs).toFixed(1)}s)`);
   const causes = {};
   for (const r of runs) causes[r.cause] = (causes[r.cause] || 0) + 1;
-  assert((causes.caught || 0) >= runs.length * 0.8,
-    `skilled runs end at the closing edge rather than a mistake (${JSON.stringify(causes)})`);
+  assert(!causes.caught, `nothing is killed by a clock any more (${JSON.stringify(causes)})`);
 }
 
 console.log('\n3. it is a game, not a timer');
@@ -126,10 +135,15 @@ console.log('\n3b. you cannot land through the side of a platform');
 console.log('\n4. the viewport is the same for everyone');
 {
   assert(R.VIEW.w > 0 && R.VIEW.h > 0, 'the world viewport is a fixed size in game units');
-  // The camera is a pure function of time, which is what lets every player
-  // share one camera and see each other on the same screen.
-  assert(R.cameraX(10) === R.cameraX(10), 'the camera depends only on elapsed time');
-  assert(R.cameraX(20) > R.cameraX(10), 'and it closes in as the round goes on');
+  // One pace everywhere. Two speeds meant the run sped up and slowed down
+  // under you, and it was the only reason the closing edge could be outrun.
+  assert(R.PHYS.runSpeed === undefined && R.PHYS.airSpeed === undefined,
+    'there is no separate air speed — the run does not change pace under you');
+  assert(R.speedAt(30) > R.speedAt(0) && R.speedAt(90) > R.speedAt(30),
+    `the pace keeps climbing (${R.speedAt(0).toFixed(1)} to ` +
+    `${R.speedAt(30).toFixed(1)} to ${R.speedAt(90).toFixed(1)})`);
+  assert(R.reachAt(1200) > R.reachAt(0),
+    'a jump carries further later, so gaps have to grow faster still to keep up');
 }
 
 console.log('\n5. the engine scores a round');
@@ -141,7 +155,7 @@ console.log('\n5. the engine scores a round');
   g.begin();
   g.reportDeath(0, { seconds: 12.5, distance: 140, cause: 'lava' });
   assert(g.phase === 'running', 'one player out does not end the round');
-  g.reportDeath(1, { seconds: 20.1, distance: 230, cause: 'caught' });
+  g.reportDeath(1, { seconds: 20.1, distance: 230, cause: 'ceiling' });
   assert(g.phase === 'results', 'the last one out ends it');
   assert(g.revealed.winners.length === 1 && g.revealed.winners[0] === 1,
     'the longest survivor takes the round');
@@ -237,7 +251,7 @@ try {
   assert(a.state.phase === 'running', 'one out does not end it');
   assert(a.state.alive[a.seat] === false && a.state.alive[b.seat] === true,
     'and the others can see who is still going');
-  b.act({ kind: 'died', seconds: 1.2, distance: 70, cause: 'caught' });
+  b.act({ kind: 'died', seconds: 1.2, distance: 70, cause: 'ceiling' });
   await waitFor(() => a.state.phase === 'results', 'the round to be scored');
   assert(a.state.revealed.winners.includes(b.seat), 'the one who lasted longer won it');
 
@@ -265,7 +279,7 @@ try {
   await waitFor(() => solo.state.phase === 'running', 'the off', 10000);
 
   await sleep(1200);
-  solo.act({ kind: 'died', seconds: 0.9, distance: 30, cause: 'caught' });
+  solo.act({ kind: 'died', seconds: 0.9, distance: 30, cause: 'lava' });
   await waitFor(() => solo.state.phase === 'results', 'the run to be scored');
   assert(solo.state.revealed.winners.includes(solo.seat),
     'a solo run scores rather than hanging');

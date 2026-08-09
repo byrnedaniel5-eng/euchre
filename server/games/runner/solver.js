@@ -40,10 +40,9 @@ function tryHold(player, level, hold, t0, dt) {
 /**
  * The best hold to use right now, or null if nothing survives.
  *
- * `trapped` distinguishes the two ways that can happen. Late in a run the
- * closing edge catches every branch inside the horizon, which is the run
- * ending normally rather than the course being unfair; only a branch set where
- * everything ends in lava or a slab means the course itself is at fault.
+ * `trapped` means every hold on offer ends in lava or a slab — the course has
+ * put the runner somewhere with no way out, which is a fault in the generator
+ * rather than a mistake by the player.
  */
 export function chooseHold(player, level, t, dt, samples = 24) {
   let best = null;
@@ -53,7 +52,7 @@ export function chooseHold(player, level, t, dt, samples = 24) {
     const hold = (R.PHYS.holdSeconds * i) / samples;
     const out = tryHold(player, level, hold, t, dt);
     if (out.dead) {
-      if (out.cause !== 'caught') anyNonEdgeDeath = true;
+      anyNonEdgeDeath = true;
       continue;
     }
     allDead = false;
@@ -73,6 +72,7 @@ export function solve(seed, { dt = 1 / 120, maxSeconds = 300, noise = 0 } = {}) 
   let t = 0;
   let holdUntil = -1;
   let stuck = 0;
+  let firstStuckAt = null;
 
   while (!p.dead && t < maxSeconds) {
     if (p.grounded && holdUntil < t) {
@@ -80,9 +80,12 @@ export function solve(seed, { dt = 1 / 120, maxSeconds = 300, noise = 0 } = {}) 
       const runway = here ? here.x + here.w - p.x : 0;
       // Only commit to a jump once the edge is close; jumping early wastes the
       // platform and puts you under the next slab too high.
-      if (here && runway < R.PHYS.runSpeed * 0.12) {
+      if (here && runway < R.speedAt(t) * 0.12) {
         const best = chooseHold(p, level, t, dt);
-        if (best.trapped) stuck++;
+        if (best.trapped) {
+          stuck++;
+          if (firstStuckAt === null) firstStuckAt = t;
+        }
         let hold = best.hold !== null ? best.hold : R.PHYS.holdSeconds * 0.5;
         if (noise) hold = Math.max(0, Math.min(R.PHYS.holdSeconds, hold * (1 + (rng() - 0.5) * noise)));
         holdUntil = t + hold;
@@ -92,5 +95,5 @@ export function solve(seed, { dt = 1 / 120, maxSeconds = 300, noise = 0 } = {}) 
     t += dt;
   }
 
-  return { seconds: t, distance: p.x, cause: p.cause, stuck };
+  return { seconds: t, distance: p.x, cause: p.cause, stuck, firstStuckAt };
 }

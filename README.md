@@ -181,9 +181,28 @@ animation that was going to run anyway.
 ## Lava Run
 
 Everyone runs the same course at the same moment, on their own phone. **You can
-run it alone**, in which case it is a time trial against the closing edge and
-the result screen reports your time and your best rather than announcing you as
-the winner of a race you were the only entrant in.
+run it alone**, in which case it is a time trial and the result screen reports
+your time and your best rather than announcing you as the winner of a race you
+were the only entrant in.
+
+**One pace, everywhere, and it never stops rising.** The run used to be faster
+in the air than on the ground, which made jumping gain ground on the closing
+edge — but it also meant the game sped up and slowed down under you for no
+visible reason. There is now a single speed that climbs for as long as you
+survive.
+
+That change has a consequence worth stating: with one speed nobody can fall
+behind, so an edge that killed could only ever be a clock ending everyone at
+the same instant — precisely the tie you do not want when two people both play
+well. So **nothing chases you to death any more**. The lava wall sits at your
+heels as pressure, and what kills you is the lava ahead or the rock above.
+
+The course is therefore unbounded. Gaps are a share of what a jump can actually
+clear at that point, and that share keeps climbing, so it stays possible for a
+long time and then stops being possible — every run ends on a mistake, at a
+different moment on a different course. Good play currently lasts between about
+37 and 67 seconds depending on the seed, which is the spread that stops two
+strong runs finishing level.
  Tap to
 hop, hold to jump further. Fall in the lava, clip a rock overhead, or let the
 closing left edge catch you and you are out; the last one going takes the
