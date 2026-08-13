@@ -217,6 +217,41 @@
   <p class="hint">Tap to hop &middot; hold to jump further</p>
 </section>
 
+<!-- ----------------------------------------------------- battleships -->
+<section id="game-battleship" class="screen game-screen" hidden>
+  <header id="bs-hud">
+    <div class="turn-pill"><span id="bs-phase">Setup</span></div>
+    <div id="bs-turn" class="bs-turn"></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+
+  <div id="bs-fleets" class="draw-scores"></div>
+
+  <div id="bs-place" class="bs-pane" hidden>
+    <div id="bs-own-grid" class="bs-grid"></div>
+    <div id="bs-tray" class="bs-tray"></div>
+    <div class="bs-actions">
+      <button id="bs-rotate" class="ghost">Rotate</button>
+      <button id="bs-random" class="ghost">Random</button>
+      <button id="bs-clear" class="ghost">Clear</button>
+    </div>
+    <p id="bs-place-hint" class="hint"></p>
+    <button id="bs-ready" class="primary">Ready</button>
+  </div>
+
+  <div id="bs-play" class="bs-pane" hidden>
+    <div id="bs-tabs" class="bs-tabs" hidden></div>
+    <div id="bs-shout" class="bs-shout" hidden></div>
+    <div id="bs-enemy-grid" class="bs-grid enemy"></div>
+    <p id="bs-play-hint" class="hint"></p>
+    <button id="bs-fire" class="primary">Fire</button>
+    <div class="bs-mini-wrap">
+      <span class="bs-mini-label">Your waters</span>
+      <div id="bs-mini-grid" class="bs-grid mini"></div>
+    </div>
+  </div>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -274,6 +309,7 @@
 <script src="games/trivia.js"></script>
 <script src="games/runner-level.js"></script>
 <script src="games/runner.js"></script>
+<script src="games/battleship.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

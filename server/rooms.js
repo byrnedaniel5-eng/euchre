@@ -72,6 +72,14 @@ export function createRoom({ gameId, options }) {
 const isHostSeat = (room, seat) =>
   !!room.seats[seat] && room.seats[seat].playerId === room.hostId;
 
+/** How many bots would join a table of this many people. */
+export const botsFor = (room, here) => {
+  if (!room.mod.usesBots) return 0;
+  return room.mod.botCount
+    ? Math.max(0, room.mod.botCount(here))
+    : Math.max(0, room.mod.seats - here);
+};
+
 export const canStart = (room) =>
   !room.started && occupiedSeats(room).length >= room.mod.minPlayers;
 
@@ -120,8 +128,10 @@ function lobbyState(room, seat) {
     })),
     youAreHost: isHostSeat(room, seat),
     canStart: canStart(room),
-    // What the table would look like if it started right now.
-    bots: room.mod.usesBots ? Math.max(0, room.mod.seats - here.length) : 0,
+    // What the table would look like if it started right now. Most games with
+    // bots want a full table; battleships only wants you to have an opponent,
+    // so a game may say how many it actually needs.
+    bots: botsFor(room, here.length),
   };
 }
 

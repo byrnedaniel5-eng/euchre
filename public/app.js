@@ -126,6 +126,7 @@
     draw: 'Two to eight people. No bots — somebody has to draw.',
     trivia: 'Two to eight people, all racing the same question.',
     runner: 'One to eight. Alone it is a time trial; together you run side by side.',
+    battleship: 'Two to four fleets. On your own you get a bot to sink instead.',
   };
 
   function renderHome() {
@@ -232,7 +233,7 @@
   // Each screen carries a look, so it is obvious at a glance which game you
   // are in — the hub is not a card table, and the drawing game is not green.
   const THEME_COLOR = { home: '#12141d', euchre: '#12261c', draw: '#17102a',
-    trivia: '#0d1c24', runner: '#170d1e' };
+    trivia: '#0d1c24', runner: '#170d1e', battleship: '#08131f' };
 
   function setTheme(name) {
     document.body.dataset.theme = name;
@@ -307,7 +308,8 @@
       : others
           .map((s) => `${state.names[s]} ${state.connected?.[s] === false ? 'offline' : 'online'}`)
           .join(' · ');
-    const bots = 4 - (state.humans ?? 2);
+    // Games say how many bots they took; euchre always fills the table.
+    const bots = state.botCount ?? (4 - (state.humans ?? 2));
     $('drawer-conn').textContent =
       who + (bots > 0 && state.difficulty ? ` · bots: ${state.difficulty}` : '');
 

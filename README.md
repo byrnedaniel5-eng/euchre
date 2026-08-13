@@ -4,7 +4,7 @@ Games for people on their own phones, usually while already on a video call.
 The app holds the private information — your hand, your prompt — and gets out
 of the way; the talking is the game.
 
-Three games so far:
+Five games so far:
 
 - **Euchre** — trick-taking to ten, one to four people, bots filling any empty
   seat.
@@ -15,6 +15,8 @@ Three games so far:
 - **Lava Run** — a side-scrolling race over collapsing platforms. Tap to hop,
   hold to jump further, and stay ahead of the closing edge. One to eight —
   alone it is a time trial, which is also how you learn a course.
+- **Battleships** — hide five ships, then hunt somebody else's down square by
+  square. Two to four fleets, or one bot to practise against.
 
 ## Looks
 
@@ -26,6 +28,9 @@ each rule is written once against them.
 | Landing / setup | Neutral slate. The hub should not look like either game. |
 | Euchre | Card-room green felt. |
 | Draw It | Ink-and-violet studio, so the white board pops. |
+| Quiz Wheel | Teal, so the coloured wheel has somewhere to sit. |
+| Lava Run | Ember and dusk, lit from below. |
+| Battleships | Cold open water. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -264,6 +269,68 @@ of the hazards failed that on 29 courses out of 30; slabs are now hung above
 the arc the jump actually requires, and the suite fails if any course has a
 moment where every possible jump kills you.
 
+## Battleships
+
+Ten by ten, five ships, one shot a turn. The rules are the ones everybody
+already knows, so what follows is only the decisions the game had to make that
+the boxed version never has to.
+
+**Two to four fleets.** With two it is the classic game. With three or four you
+pick whose waters you are firing into, and you are out when your last ship
+goes down — the game carries on without you and you keep watching.
+
+**Shots on a board are public.** With two players that is the classic game
+exactly; there is nobody to hide them from. With three or four it stops the
+table quietly re-shooting the same squares in private, and it keeps a board's
+damage as one shared record instead of one per shooter, which is most of what
+keeps a state small enough to send every turn.
+
+**Sunk ships are shown.** Every square of a sunk ship is already a known hit,
+so its outline gives nothing away — and being told what you just sank is half
+the game.
+
+**Placement lives on the server.** Each ship you put down is an action, not
+local state. The drawing game once lost work when a phone locked; this cannot,
+and the end-to-end suite drops a connection mid-setup to prove it.
+
+**After a hit** you can have the turn pass over (the boxed rule, the default)
+or fire again. Games run about a third shorter on *fire again*, and it makes a
+good run feel like a good run.
+
+### The bot cannot see through the water
+
+The server has every ship position to hand, so an opponent that promises not to
+peek is worth nothing. `bot.js` is never given a board — it is handed a
+*knowledge* object built from the shots and the sunk ships, which is exactly
+what a person sitting opposite could work out. Cheating is not forbidden, it is
+unavailable.
+
+That property needs testing carefully, and the obvious test is wrong. The bot
+hits on its opening shot about 22% of the time, well above the 17 squares in
+100 that a fleet covers — and that is correct play, not second sight: a
+five-long ship dropped at random covers the middle columns far more often than
+the corners, so the middle genuinely is the better guess.
+
+What must be true instead is that the *layout cannot reach the decision*. Given
+the same knowledge — an untouched board — the bot has to pick the same square
+no matter what is hidden underneath. The suite runs 300 different fleets past
+it and fails if the opening shot ever moves. That is exact rather than
+statistical. It also checks the honest floor: seventeen squares hold ships, so
+nothing short of cheating clears a board in seventeen shots, and over 200 games
+its best was 25.
+
+Two settings, and the difference is where it hunts rather than how hard it
+thinks:
+
+| | Hunting | Shots to clear a fleet |
+|---|---|---|
+| Casual | The odd/even lattice, plus the occasional slip | ~55 |
+| Sharp | Counts how many ways each remaining ship could still lie across each square | ~43 |
+
+A person averages somewhere around 50, so casual is a fair game and sharp is a
+hard one. Both chase properly once they find something: around a lone hit, and
+along the line as soon as two hits line up.
+
 ## Running it locally
 
 ```bash
@@ -276,10 +343,18 @@ the four-letter code (the **Copy invite link** button uses the phone share
 sheet if there is one), then press **Start** when everyone is in.
 
 Nobody picks a headcount up front. The table size is simply however many people
-are in the lobby when the host starts: euchre fills the remaining seats with
-bots and shows you which ones it would add, while the drawing and trivia games
-just play with whoever turned up, two to eight. Seats freeze at that moment, so
-a latecomer is turned away rather than appearing mid-hand.
+are in the lobby when the host starts, and each game decides for itself what to
+do with the empty chairs:
+
+- **Euchre** fills every remaining seat with a bot, because four hands is what
+  makes it euchre, and shows you which ones it would add before you start.
+- **Battleships** adds a bot only if you are on your own. Two people who turn
+  up get each other, not a table of four with two machines in it.
+- **Draw It**, **Quiz Wheel** and **Lava Run** take no bots at all and simply
+  play with whoever came.
+
+Seats freeze at that moment, so a latecomer is turned away rather than
+appearing mid-hand.
 
 ## Putting it online
 
@@ -414,6 +489,17 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
   dealer / maker / alone / trick dots, at two phone widths, in both a roomy
   and a cramped seat. Catches clipped badges and collisions with the trick
   pile, which are invisible until the one hand where they happen.
+- `server/battleship-e2e.js` — the rules, the bot's fairness (above), turn
+  order over three and four fleets, and two full games over the wire. Asserts
+  at every step of a complete game that no view carries the other fleet, that a
+  ship placed before a phone drops is still there afterwards, and that both
+  fleets are finally revealed when it is over.
+- `server/battleship-ui.js` — lays a fleet out by tapping in a real browser and
+  fires a shot. The check worth having is the last one: it is not enough for
+  the server to keep the enemy fleet out of the state, so it goes and reads the
+  computed background of all hundred enemy squares and fails if the untouched
+  ones are not identical. A leak that only showed up as a shade would pass
+  every other test in this repo.
 - `server/smoke-remote.js` — the same idea as the end-to-end test but pointed
   at a deployed URL: `npm run smoke https://your-app.onrender.com`.
 
