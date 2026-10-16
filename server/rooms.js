@@ -12,12 +12,17 @@
 
 import { randomUUID } from 'node:crypto';
 import { games, getGame } from './registry.js';
+import { Records, entryFor } from './records.js';
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1
 const ROOM_TTL = 6 * 60 * 60 * 1000; // rooms survive a long lunch break
 
 /** @type {Map<string, Room>} */
 export const rooms = new Map();
+
+/** The running score across every game and session. Swappable for tests. */
+export let records = new Records();
+export const setRecords = (r) => { records = r; };
 
 /** Seats with a person in them, in order. */
 export const occupiedSeats = (room) =>
@@ -58,6 +63,8 @@ export function createRoom({ gameId, options }) {
     options: options && typeof options === 'object' ? options : {},
     seats: Array.from({ length: mod.seats }, () => null),
     game: null,
+    // The game object last put on the record, so each game counts once.
+    recorded: null,
     timer: null,
     chat: [],
     // Seats that have pressed "next". A round only advances once everyone has,
@@ -132,6 +139,9 @@ function lobbyState(room, seat) {
     // bots want a full table; battleships only wants you to have an opponent,
     // so a game may say how many it actually needs.
     bots: botsFor(room, here.length),
+    // How this exact group has got on before, so the lobby can start the
+    // trash talk before the game does.
+    rivalry: here.length >= 2 ? records.summary(here.map((s) => room.seats[s].name)) : null,
   };
 }
 
@@ -145,6 +155,11 @@ export function stateFor(room, seat) {
     humans: room.humanCount,
     connected: connectionFlags(room),
     ready: humanSeats(room).filter((s) => room.ready.has(s)),
+    // Only once this game is on the record, so the game-over screen can show
+    // the all-time score with this result already counted.
+    rivalry: room.recorded === room.game && room.humanCount >= 2
+      ? records.summary(humanSeats(room).map((s) => room.seats[s]?.name || `Player ${s + 1}`))
+      : null,
   };
 }
 
@@ -191,6 +206,7 @@ function schedule(room, ms, fn) {
  * rather than recursion, so a long chain of bot moves can't blow the stack.
  */
 export function advance(room) {
+  noteOutcome(room);
   broadcast(room);
   if (!room.game) return;
   const next = room.mod.step(room.game, room);
@@ -205,6 +221,24 @@ export function advance(room) {
     }
     advance(room);
   });
+}
+
+/**
+ * Put a finished game on the record, once. Games say they are over through an
+ * optional outcome() — a game without one is simply never recorded. Keyed on
+ * the game object, so a rematch is a new entry and a re-broadcast is not.
+ */
+function noteOutcome(room) {
+  if (!room.game || room.recorded === room.game || !room.mod.outcome) return;
+  const outcome = room.mod.outcome(room.game, room);
+  if (!outcome) return;
+  room.recorded = room.game;
+  if (room.humanCount < 2) return;
+  try {
+    records.add(entryFor(room, outcome));
+  } catch (err) {
+    console.error(`[${room.code}] could not record the result:`, err);
+  }
 }
 
 /** Context handed to a game module while it applies someone's action. */

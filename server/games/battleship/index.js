@@ -96,6 +96,12 @@ export default {
 
   isBotSeat: (room, seat) => seat >= room.humanCount,
 
+  /** Who won, for the running score: the last fleet afloat. */
+  outcome(game) {
+    if (game.phase !== 'gameOver' || game.winner === null) return null;
+    return { winners: [game.winner] };
+  },
+
   applyAction(game, seat, action, ctx) {
     switch (action.kind) {
       case 'place':

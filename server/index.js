@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   rooms, joinRoom, leaveRoom, hostStart, applyAction, broadcast, broadcastChat,
-  stateFor, reapRooms, catalogue,
+  stateFor, reapRooms, catalogue, records,
 } from './rooms.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,6 +36,14 @@ app.get('/healthz', (_req, res) => res.json({ ok: true, rooms: rooms.size }));
 app.get('/games', (_req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.json(catalogue());
+});
+// The scoreboard: every group this name has played in, or one group's
+// head-to-head when given several names.
+app.get('/records', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  const names = [].concat(req.query.name || []).map(String).filter(Boolean).slice(0, 8);
+  if (!names.length) return res.status(400).json({ error: 'name is required' });
+  res.json(names.length === 1 ? records.groupsFor(names[0]) : [records.summary(names)]);
 });
 app.get('*', (_req, res) => {
   res.setHeader('Cache-Control', 'no-cache');

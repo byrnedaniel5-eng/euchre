@@ -9,3 +9,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # The running score. Without these it is kept on local disk, which the
+      # free tier wipes on every spin-down. Free at upstash.com; see README.
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false

@@ -497,6 +497,14 @@ try {
     assert(back.state.boards.every((bd) => bd.placements !== null),
       'and every fleet is on show at the end');
 
+    // The running score: the game lands on the record exactly once, and the
+    // game-over state already counts it.
+    const rv = back.state.rivalry;
+    const winnerName = back.state.names[back.state.winner];
+    assert(rv && rv.total.played === 1, `the result went on the running score (${rv?.total.played})`);
+    assert(rv && rv.total.wins[winnerName] === 1 && rv.byGame.battleship?.played === 1,
+      'credited to the winner, under battleships');
+
     const expected = /not your turn|already been fired at|not ready to fire|overlap|game is not over/i;
     const unexpected = back.errors.concat(b.errors).filter((e) => !expected.test(e));
     assert(unexpected.length === 0, `no unexpected errors (${unexpected.slice(0, 3).join('; ')})`);

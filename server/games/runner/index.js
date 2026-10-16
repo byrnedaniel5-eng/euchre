@@ -55,6 +55,16 @@ export default {
 
   isBotSeat: () => false,
 
+  /** Who won, for the running score: the top round count, ties and all. */
+  outcome(game) {
+    if (game.phase !== 'gameOver') return null;
+    const best = Math.max(...game.wins);
+    return {
+      winners: game.wins.map((v, i) => (v === best ? i : -1)).filter((i) => i >= 0),
+      score: game.wins.join('–'),
+    };
+  },
+
   applyAction(game, seat, action, ctx) {
     switch (action.kind) {
       case 'pos': {

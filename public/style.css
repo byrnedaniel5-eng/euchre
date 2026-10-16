@@ -1421,3 +1421,71 @@ body[data-theme="battleship"] {
 
 #bs-fire:disabled { opacity: 0.45; }
 .ds.out { opacity: 0.45; text-decoration: line-through; }
+
+/* ============================================================ running score */
+
+.records-btn { margin-top: 12px; }
+#records { display: flex; justify-content: center; padding: 24px; overflow-y: auto; }
+#records .join-card { align-self: flex-start; }
+#records-list { display: flex; flex-direction: column; gap: 12px; }
+
+.rivalry {
+  margin-top: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+#records-list .rivalry { margin-top: 0; }
+.rivalry > label { margin-top: 0; }
+
+/* The overall score, big enough to read across the room. */
+.rv-big { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 4px 0 6px; }
+.rv-side { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+.rv-side b { font-size: 34px; line-height: 1; color: var(--gold); }
+.rv-side span {
+  max-width: 110px;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rv-dash { font-size: 22px; color: var(--muted); }
+.rv-group { margin: 0 0 6px; font-size: 13px; font-weight: 700; text-align: center; }
+.rv-streak { margin: 0 0 8px; text-align: center; font-size: 13px; color: var(--gold); }
+
+.rv-rows { display: flex; flex-direction: column; gap: 3px; }
+.rv-row, .rv-recent > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+.rv-row span { color: var(--muted); }
+.rv-recent {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rv-recent > div span:first-child { color: var(--muted); }
+.rv-recent i { font-style: normal; color: var(--muted); }
+
+.ov-record {
+  margin-top: 12px !important;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px !important;
+  color: var(--muted) !important;
+}
+.ov-record b { color: var(--gold); }
+
+/* The head-to-head card can make the lobby taller than a small phone. Centred
+   by auto margins rather than align-items, so when it overflows the top stays
+   reachable instead of being pushed off-screen above the scroll origin. */
+#lobby { overflow-y: auto; align-items: flex-start; }
+#lobby .join-card { margin: auto 0; }

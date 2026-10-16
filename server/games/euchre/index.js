@@ -63,6 +63,17 @@ export default {
 
   isBotSeat: (room, seat) => seat >= room.humanCount,
 
+  /** Who won, for the running score. A team game: seats 0+2 against 1+3. */
+  outcome(game) {
+    if (game.phase !== 'gameOver') return null;
+    const team = game.score[0] > game.score[1] ? 0 : 1;
+    return {
+      winners: [0, 1, 2, 3].filter((s) => s % 2 === team),
+      team: true,
+      score: `${game.score[team]}–${game.score[1 - team]}`,
+    };
+  },
+
   applyAction(game, seat, action, ctx) {
     switch (action.kind) {
       case 'bid1':

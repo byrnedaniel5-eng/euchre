@@ -4,7 +4,7 @@ Games for people on their own phones, usually while already on a video call.
 The app holds the private information — your hand, your prompt — and gets out
 of the way; the talking is the game.
 
-Five games so far:
+Five games so far, and a running score between whoever plays them:
 
 - **Euchre** — trick-taking to ten, one to four people, bots filling any empty
   seat.
@@ -330,6 +330,51 @@ thinks:
 A person averages somewhere around 50, so casual is a fair game and sharp is a
 hard one. Both chase properly once they find something: around a lone hit, and
 along the line as soon as two hits line up.
+
+## The running score
+
+Every finished game with two or more people in it goes on the record — the
+game, who played, who won — and the site keeps a head-to-head from it:
+
+- **In the lobby**, as soon as a second person joins: the all-time score
+  between exactly the people in the room, who is on a winning run, and a line
+  per game.
+- **On every game-over screen**, the all-time score with the game you just
+  finished already counted.
+- **🏆 Scoreboard** on the home screen: everyone you have played, most recent
+  first, with your last few results against each.
+
+People are known by **name**, compared without case — the per-device id
+changes with a new phone or a cleared browser, and a name does not. Type the
+same name each time and the record follows you. Bots are never on it, and a
+game you play alone is not recorded.
+
+A three-person group is its own rivalry, separate from any pair inside it.
+Ties count as draws. **Co-op games** (where everyone is on one side) are shown
+as "won together" and kept out of the score — beating the game with somebody
+is not a point against them. A team game where every person ended up on the
+same side, such as two people partnering against euchre bots, counts as co-op
+too.
+
+A game module joins in by exporting `outcome(game)`: `null` until it is over,
+then `{ winners: [seats], score?, team?, coop? }`. Seats that are bots are
+dropped before anything is written.
+
+### Keeping it across restarts
+
+Locally the record is a file, `data/records.json`. **On Render's free tier
+that file does not survive** — the disk is wiped every time the service
+spins down, which is every fifteen idle minutes. To keep the score online:
+
+1. Make a free database at [upstash.com](https://upstash.com) (Redis, any
+   region near your Render one; no card needed).
+2. On its page, copy the **REST URL** and **REST token**.
+3. In Render → your service → **Environment**, add
+   `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+
+With those set the record lives in Upstash instead of the file. The test
+suites boot the server in fast mode, which keeps the record in memory, so
+running them never writes test games onto the real scoreboard.
 
 ## Running it locally
 

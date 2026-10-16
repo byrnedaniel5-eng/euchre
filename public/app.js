@@ -226,7 +226,7 @@
   // Built from the registered renderers rather than listed by hand: a game
   // whose section is missing here never becomes visible at all, and every
   // symptom of that shows up somewhere else entirely.
-  const FIXED_SCREENS = ['home', 'setup', 'lobby'];
+  const FIXED_SCREENS = ['home', 'setup', 'lobby', 'records'];
   const allScreens = () =>
     [...new Set([...FIXED_SCREENS, ...Object.values(RENDERERS).map((r) => r.root)])];
 
@@ -243,7 +243,7 @@
 
   function showScreen(id) {
     for (const s of allScreens()) if ($(s)) $(s).hidden = s !== id;
-    if (id === 'home') setTheme('home');
+    if (id === 'home' || id === 'records') setTheme('home');
     else if (id === 'setup') setTheme(chosenGame);
     else if (id === 'lobby') setTheme(state?.game || chosenGame);
     else setTheme(id.replace('game-', ''));
@@ -279,6 +279,8 @@
           (state.bots ? ` and ${state.bots} bot${state.bots === 1 ? '' : 's'}` : '')
         : `Need ${state.minPlayers} players`;
 
+      renderRivalry($('lobby-rivalry'), state.rivalry);
+
       $('lobby-status').textContent = state.youAreHost
         ? (state.canStart ? 'Start whenever you are ready.'
                           : `Waiting for ${state.minPlayers - here} more.`)
@@ -292,8 +294,119 @@
     // The card appearance panel only means anything to a card game.
     $('card-settings').hidden = !active.usesCards;
     active.render(state, ctx);
+    renderRecordLine();
     renderDrawer();
   }
+
+  // ------------------------------------------------------- running score
+
+  const gameName = (id) => catalogue.find((g) => g.id === id)?.name || id;
+  const gameIcon = (id) => catalogue.find((g) => g.id === id)?.icon || '🎲';
+  const myName = () => (state?.names?.[mySeat] || $('name').value || '').trim();
+  const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+  /** Names with me first, so "You 12 – 9 Sam" always reads from my side. */
+  function ordered(summary) {
+    const me = myName();
+    return [...summary.names].sort((a, b) => (same(b, me) ? 1 : 0) - (same(a, me) ? 1 : 0));
+  }
+
+  function tally(bucket, names) {
+    return names.map((n) => bucket.wins[n] ?? 0).join('–') +
+      (bucket.draws ? ` (${bucket.draws} drawn)` : '');
+  }
+
+  /**
+   * The head-to-head card: the overall score big, who is on a run, then a line
+   * per game. Co-op games are on the same card but kept out of the score —
+   * winning one together is not a point against anybody.
+   */
+  function rivalryHtml(summary, { recent = false } = {}) {
+    const names = ordered(summary);
+    const t = summary.total;
+    const label = (n) => escapeHtml(same(n, myName()) ? 'You' : n);
+    const big = names.map((n) => `
+      <div class="rv-side"><b>${t.wins[n] ?? 0}</b><span>${label(n)}</span></div>`)
+      .join('<div class="rv-dash">–</div>');
+
+    const rows = Object.entries(summary.byGame).map(([g, b]) => {
+      const parts = [];
+      if (b.played) parts.push(tally(b, names));
+      if (b.coop.played) parts.push(`${b.coop.won}/${b.coop.played} won together`);
+      return `<div class="rv-row"><span>${gameIcon(g)} ${escapeHtml(gameName(g))}</span><b>${parts.join(' · ')}</b></div>`;
+    }).join('');
+
+    const streak = summary.streak
+      ? `<p class="rv-streak">🔥 ${label(summary.streak.who)} ${
+        same(summary.streak.who, myName()) ? 'have' : 'has'} won the last ${summary.streak.n}</p>`
+      : '';
+
+    const recentHtml = recent && summary.recent.length
+      ? `<div class="rv-recent">${summary.recent.map((r) => {
+        const what = r.coop
+          ? (r.winners.length ? 'won together' : 'lost together')
+          : r.winners.length === 0 || r.winners.length === r.players.length
+            ? 'draw'
+            : `${r.winners.map(label).join(' & ')} won`;
+        return `<div><span>${gameIcon(r.game)} ${new Date(r.at).toLocaleDateString(undefined,
+          { day: 'numeric', month: 'short' })}</span><span>${what}${
+          r.score ? ` <i>${escapeHtml(r.score)}</i>` : ''}</span></div>`;
+      }).join('')}</div>`
+      : '';
+
+    return `
+      ${names.length > 2 ? `<p class="rv-group">${names.map(label).join(', ')}</p>` : ''}
+      ${t.played ? `<div class="rv-big">${big}</div>` : ''}
+      ${streak}
+      <div class="rv-rows">${rows}</div>
+      ${recentHtml}`;
+  }
+
+  function renderRivalry(el, summary) {
+    const any = summary && (summary.total.played || summary.total.coop.played);
+    el.hidden = !any;
+    if (any) el.innerHTML = `<label>Head to head</label>${rivalryHtml(summary)}`;
+  }
+
+  /** One line on whatever game-over overlay is showing: the all-time score. */
+  function renderRecordLine() {
+    const el = $('ov-record');
+    const r = state.rivalry;
+    if (!r || $('overlay').hidden) { el.hidden = true; return; }
+    const names = ordered(r);
+    const g = r.byGame[state.game];
+    const label = (n) => escapeHtml(same(n, myName()) ? 'You' : n);
+    const parts = [];
+    if (r.total.played) {
+      parts.push(`All time: ${names.map((n) => `${label(n)} <b>${r.total.wins[n] ?? 0}</b>`).join(' · ')}`);
+    }
+    if (g?.played && g.played !== r.total.played) parts.push(`${escapeHtml(gameName(state.game))} ${tally(g, names)}`);
+    if (g?.coop.played) parts.push(`${g.coop.won} of ${g.coop.played} won together`);
+    el.innerHTML = parts.join('<br>');
+    el.hidden = !parts.length;
+  }
+
+  async function showRecords() {
+    const name = $('name').value.trim();
+    showScreen('records');
+    $('records-list').innerHTML = '';
+    if (!name) {
+      $('records-who').textContent = 'Put your name in first — the scoreboard goes by name.';
+      return;
+    }
+    $('records-who').textContent = `Everyone ${name} has played.`;
+    try {
+      const groups = await (await fetch(`/records?name=${encodeURIComponent(name)}`)).json();
+      $('records-list').innerHTML = groups.length
+        ? groups.map((g) => `<div class="rivalry">${rivalryHtml(g, { recent: true })}</div>`).join('')
+        : '<p class="hint">Nothing yet. Finish a game with somebody and it lands here.</p>';
+    } catch {
+      $('records-list').innerHTML = '<p class="hint">Could not reach the scoreboard.</p>';
+    }
+  }
+
+  $('open-records').onclick = showRecords;
+  $('records-back').onclick = () => showScreen('home');
 
   // -------------------------------------------------------------- drawer
 

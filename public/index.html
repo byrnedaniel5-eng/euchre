@@ -25,6 +25,7 @@
 
     <label>Choose a game</label>
     <div id="game-list" class="game-list"></div>
+    <button id="open-records" class="ghost wide records-btn">🏆 Scoreboard</button>
 
     <div class="divider"><span>or</span></div>
 
@@ -68,9 +69,20 @@
     <label>Who's here</label>
     <div id="lobby-players" class="lobby-players"></div>
     <p class="hint" id="lobby-status"></p>
+    <div id="lobby-rivalry" class="rivalry" hidden></div>
 
     <button id="lobby-start" class="primary" hidden>Start game</button>
     <button id="lobby-cancel" class="ghost wide">Leave lobby</button>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------- scoreboard -->
+<section id="records" class="screen" hidden>
+  <div class="join-card records-card">
+    <button id="records-back" class="back-btn">‹ All games</button>
+    <div class="setup-head"><span class="setup-icon">🏆</span><h2>Scoreboard</h2></div>
+    <p class="tagline" id="records-who"></p>
+    <div id="records-list"></div>
   </div>
 </section>
 
@@ -258,6 +270,7 @@
     <h2 id="ov-title"></h2>
     <p id="ov-body"></p>
     <div id="ov-tricks" class="ov-tricks"></div>
+    <p id="ov-record" class="ov-record" hidden></p>
     <button id="ov-btn" class="primary"></button>
     <button id="ov-leave" class="ov-leave">Back to games</button>
   </div>
