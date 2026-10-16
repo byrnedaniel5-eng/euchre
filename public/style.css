@@ -1889,3 +1889,87 @@ body[data-theme="dots"] button.primary {
 .db-chip { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 50%; background: var(--ink); }
 #db-scores .ds b { display: inline-flex; align-items: center; }
 #db-hint { text-align: center; }
+
+/* =============================================================== word race */
+
+/* Newsprint at night: near-black, with the familiar green and gold. */
+body[data-theme="wordle"] {
+  --felt-1: #121417;
+  --felt-2: #1f2328;
+  --panel: #1b1e22;
+  --ink: #f2f4f5;
+  --muted: #9aa3ab;
+  --gold: #e5c14b;
+  --accent: #5aa95b;
+  background: linear-gradient(180deg, #1c2024, #121417 60%);
+}
+body[data-theme="wordle"] button.primary {
+  background: linear-gradient(180deg, #67b868, #4a904b);
+  color: #fff;
+}
+.game-card[data-for="wordle"]::before { background: #5aa95b; }
+
+#game-wordle { gap: 8px; }
+.m-g { background: #5aa95b !important; border-color: #5aa95b !important; color: #fff !important; }
+.m-y { background: #c9a83a !important; border-color: #c9a83a !important; color: #fff !important; }
+.m-x { background: #3a3e44 !important; border-color: #3a3e44 !important; color: #c9ced3 !important; }
+
+.wr-others { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; flex: 0 0 auto; }
+.wr-other { display: flex; align-items: center; gap: 8px; padding: 5px 9px; border-radius: 10px; background: rgba(0, 0, 0, 0.25); }
+.wr-other span { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); }
+.wr-other span b { color: var(--ink); font-size: 13px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wr-mini { display: flex; flex-direction: column; gap: 2px; }
+.wr-mrow { display: flex; gap: 2px; }
+.wr-mrow i { width: 8px; height: 8px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); font-size: 0; }
+.wr-other.open .wr-mrow i { width: 14px; height: 14px; font-size: 9px; font-style: normal; font-weight: 800; text-transform: uppercase; display: grid; place-items: center; }
+
+.wr-answer { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.wr-answer b { font-size: 26px; letter-spacing: 0.25em; color: var(--gold); }
+.wr-answer span { font-size: 13px; color: var(--muted); }
+
+.wr-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.wr-board {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  gap: 5px;
+  height: 100%;
+  max-height: 360px;
+  aspect-ratio: 5 / 6;
+}
+.wr-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.wr-row .t {
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: clamp(18px, 4.5dvh, 30px);
+  font-weight: 800;
+  text-transform: uppercase;
+  border: 2px solid #3a3e44;
+  border-radius: 4px;
+}
+.wr-row .t.typed { border-color: #6b7178; animation: wr-pop 0.1s ease-out; }
+.wr-row .t.flip { animation: wr-flip 0.45s ease-in-out both; animation-delay: calc(var(--k) * 0.12s); }
+@keyframes wr-pop { from { transform: scale(1.12); } }
+@keyframes wr-flip {
+  0% { transform: rotateX(0); background: transparent; border-color: #6b7178; color: var(--ink); }
+  49% { background: transparent; border-color: #6b7178; color: var(--ink); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+
+.wr-keys { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; }
+.wr-krow { display: flex; gap: 5px; justify-content: center; }
+.wr-key {
+  flex: 1;
+  max-width: 44px;
+  height: 54px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #5f656c;
+  border: none;
+  border-radius: 6px;
+}
+.wr-key.wide { max-width: 66px; flex: 1.5; font-size: 12px; }
+#wr-next { margin-top: 0; }

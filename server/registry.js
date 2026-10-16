@@ -12,8 +12,9 @@ import codenames from './games/codenames/index.js';
 import wavelength from './games/wavelength/index.js';
 import knowme from './games/knowme/index.js';
 import dots from './games/dots/index.js';
+import wordle from './games/wordle/index.js';
 
-const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength, knowme, dots];
+const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength, knowme, dots, wordle];
 const BY_ID = new Map(MODULES.map((m) => [m.id, m]));
 
 export const games = () => MODULES;

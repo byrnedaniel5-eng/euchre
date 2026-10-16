@@ -358,6 +358,21 @@
   <p id="db-hint" class="hint"></p>
 </section>
 
+<!-- ------------------------------------------------------- word race -->
+<section id="game-wordle" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div class="turn-pill"><span id="wr-round"></span></div>
+    <div id="wr-status" class="g-turn"></div>
+    <div class="turn-pill"><span id="wr-score"></span></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="wr-others" class="wr-others"></div>
+  <div id="wr-answer" class="wr-answer" hidden></div>
+  <div class="wr-stage"><div id="wr-board" class="wr-board"></div></div>
+  <div id="wr-keys" class="wr-keys"></div>
+  <button id="wr-next" class="primary" hidden></button>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -422,6 +437,7 @@
 <script src="games/wavelength.js"></script>
 <script src="games/knowme.js"></script>
 <script src="games/dots.js"></script>
+<script src="games/wordle.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

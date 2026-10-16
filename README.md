@@ -27,6 +27,8 @@ The games so far, and a running score between whoever plays them:
   question about yourself, everyone else predicts it.
 - **Dots & Boxes** — draw lines, close boxes, go again. Two to four, or one
   against a bot.
+- **Word Race** — the same hidden five-letter word for everyone, six guesses
+  each, all at once. You can watch their colours fill in, never their letters.
 
 ## Looks
 
@@ -46,6 +48,7 @@ each rule is written once against them.
 | Wavelength | A seventies game-show set: chocolate brown, the dial in warm oranges. |
 | Know Me | Late-night conversation: deep plum and warm pink. |
 | Dots & Boxes | Graphite and a yellow pencil, the board on notebook paper. |
+| Word Race | Newsprint at night: near-black with the familiar green and gold. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -475,6 +478,30 @@ box:
 
 Over 400 games on 4×4, Casual beats Easy about 12 to 1 and Sharp beats Casual
 about 5 to 1; the suite asserts both gaps.
+
+## Word Race
+
+Everyone gets the same hidden word and six guesses on their own board, at the
+same time. **While the round is on you see everybody else's colours but never
+their letters** — comparing Wordle grids, only live — and when everyone has
+solved it or run out, every board is shown in full. A solve scores 7 minus
+the guesses it took, and whoever solves first takes one more. One to five
+words a game; alone it is practice and is not recorded.
+
+Two word lists, on purpose. A guess may be any of **12,578** five-letter
+words, so plurals and odd words are fine. The hidden word only ever comes
+from about **850 common words** written for this project — losing to XYLYL
+is not a game anybody enjoys — with US spellings left out (COLOUR does not
+fit in five). Words are not repeated within a room, rematches included.
+
+Repeated letters are marked as the original does: greens first, then yellows
+left to right, never more of a letter than the answer has. The suite checks
+the awkward cases (EERIE against THREE, LLAMA against LABEL) and then plays a
+real race over the wire, solving each board by reading its own colours,
+since the test is no more allowed to see the answer than a phone is.
+
+The guess list comes from the MIT-licensed `word-list` package; see
+`server/games/wordle/LICENSE-words.txt`.
 
 ## The running score
 
