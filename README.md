@@ -21,6 +21,8 @@ The games so far, and a running score between whoever plays them:
   bot at three strengths.
 - **Codenames Duet** — the co-op word game. Each phone holds half the key;
   you clue each other towards fifteen agents and away from the assassins.
+- **Wavelength** — one of you sees where a hidden target sits between two
+  opposites and gives a clue; the other turns a dial to find it.
 
 ## Looks
 
@@ -37,6 +39,7 @@ each rule is written once against them.
 | Battleships | Cold open water. |
 | Connect Four | A red toy-box room, so the blue board is what you look at. |
 | Codenames Duet | A field office after dark: olive-black, words on cream card stock. |
+| Wavelength | A seventies game-show set: chocolate brown, the dial in warm oranges. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -394,6 +397,29 @@ What the app decides, so nobody has to argue about it:
 
 A win or a loss goes on the running score as something you did together, and
 is kept out of the head-to-head.
+
+## Wavelength
+
+Each round one player is the psychic. They see a spectrum — *Underrated ↔
+Overrated*, *Smells bad ↔ Smells good* — and where a hidden target sits on
+it, and give a clue that lands about there. Everyone else drags a needle
+round a half-dial and locks it in. Dead on is 4, then 3, then 2; the bands
+together cover about a fifth of the dial, as in the boxed game. The psychic
+can swap the card twice a turn if it is a dud.
+
+**With two people it is co-op**: one score, and the result is how in sync
+you were. With three or more, every guesser scores their own needle and the
+psychic collects the average of what their clue earned. Paying the psychic
+with only two players would tie every game — the trap Draw It already fell
+into once.
+
+**Only the psychic's phone ever has the target** before the reveal. Guessers
+do not see each other's needles either, so nobody can drift towards a better
+guess. The psychic, though, **watches every needle move live** — keeping a
+straight face while your partner wanders the wrong way is half of the boxed
+game, and on a video call it is most of it. Those moves go to the psychic's
+phone alone through a small `sendTo(seat)` on the room layer; the suite
+checks a third player receives nothing.
 
 ## The running score
 

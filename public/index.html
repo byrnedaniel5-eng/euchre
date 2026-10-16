@@ -301,6 +301,34 @@
   </div>
 </section>
 
+<!-- ------------------------------------------------------ wavelength -->
+<section id="game-wavelength" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div class="turn-pill"><span id="wl-round"></span></div>
+    <div id="wl-status" class="g-turn"></div>
+    <div class="turn-pill"><span id="wl-score"></span></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="wl-scores" class="draw-scores"></div>
+  <div class="wl-stage">
+    <div id="wl-clue" class="wl-clue"></div>
+    <svg id="wl-dial" class="wl-dial" viewBox="0 0 200 112" aria-label="Dial"></svg>
+    <div class="wl-poles"><span id="wl-left"></span><span id="wl-right"></span></div>
+  </div>
+  <div id="wl-points" class="wl-points" hidden></div>
+  <form id="wl-give" class="wl-give" hidden>
+    <input id="wl-text" maxlength="60" placeholder="Your clue" autocomplete="off">
+    <div class="row">
+      <button type="button" id="wl-skip" class="ghost">New card</button>
+      <button type="submit" class="primary" id="wl-send">Give clue</button>
+    </div>
+  </form>
+  <div id="wl-act" class="wl-act">
+    <p id="wl-hint" class="hint"></p>
+    <button id="wl-go" class="primary" hidden></button>
+  </div>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -362,6 +390,7 @@
 <script src="games/battleship.js"></script>
 <script src="games/connect4.js"></script>
 <script src="games/codenames.js"></script>
+<script src="games/wavelength.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

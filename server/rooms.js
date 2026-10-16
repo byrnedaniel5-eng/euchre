@@ -256,6 +256,10 @@ function actionContext(room) {
     clearReady: () => room.ready.clear(),
     restart: () => startGame(room),
     broadcastRaw: (msg, except) => broadcastRaw(room, msg, except),
+    /** Something for one seat's eyes only, outside the state. */
+    sendTo(seat, msg) {
+      for (const ws of room.seats[seat]?.sockets || []) send(ws, msg);
+    },
     chat: (entry) => broadcastChat(room, entry),
   };
 }

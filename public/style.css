@@ -1685,3 +1685,79 @@ body[data-theme="codenames"] button.primary {
 .cn-act { margin-top: auto; }
 .cn-act .hint { margin: 0 0 4px; text-align: center; }
 #ov-tricks .ghost { margin-top: 4px; }
+
+/* ============================================================== wavelength */
+
+/* A seventies game-show set: chocolate brown, the dial in warm oranges. */
+body[data-theme="wavelength"] {
+  --felt-1: #1e140e;
+  --felt-2: #3a2416;
+  --panel: #2a1c13;
+  --ink: #fbf1e6;
+  --muted: #c8aa92;
+  --gold: #ffd166;
+  --accent: #ff8a3d;
+  background:
+    radial-gradient(900px 560px at 50% 0%, rgba(255, 138, 61, 0.22), transparent 65%),
+    linear-gradient(180deg, #33200f, #1e140e 70%);
+}
+body[data-theme="wavelength"] button.primary {
+  background: linear-gradient(180deg, #ff9f5a, #e86f22);
+  color: #2a1204;
+}
+.game-card[data-for="wavelength"]::before { background: #ff8a3d; }
+
+#game-wavelength { gap: 10px; }
+.wl-stage { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
+.wl-clue { display: flex; flex-direction: column; align-items: center; text-align: center; min-height: 54px; }
+.wl-clue span { font-size: 12px; color: var(--muted); }
+.wl-clue b { font-size: 24px; line-height: 1.2; color: var(--gold); word-break: break-word; }
+
+.wl-dial { width: 100%; max-width: 440px; touch-action: none; overflow: visible; }
+.wl-face { fill: #f3e6cf; stroke: #6b4a2f; stroke-width: 2; }
+.wl-tick { stroke: #8e6f52; stroke-width: 1; }
+.wl-band.b2 { fill: #ffc15e; }
+.wl-band.b3 { fill: #ff8a3d; }
+.wl-band.b4 { fill: #2fa4b9; }
+.wl-band-label { fill: #fff; font-size: 9px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; }
+.wl-needle line { stroke-width: 3.2; stroke-linecap: round; }
+.wl-needle circle { stroke: none; }
+.wl-needle.me line { stroke: #c0262d; }
+.wl-needle.me circle { fill: #c0262d; }
+.wl-needle.me.locked line { stroke: #7a1a1e; }
+.wl-needle.other line { stroke: #3b2a1e; stroke-width: 2; opacity: 0.85; }
+.wl-needle.other circle { fill: #3b2a1e; }
+.wl-needle.live line { stroke-dasharray: 4 3; }
+.wl-needle text { fill: var(--ink); font-size: 9px; font-weight: 800; text-anchor: middle; }
+
+.wl-poles {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 440px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.wl-poles span { max-width: 48%; }
+.wl-poles span:last-child { text-align: right; }
+
+.wl-points {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.wl-points > b { font-size: 34px; line-height: 1; color: var(--gold); }
+.wl-points > span { font-size: 13px; color: var(--muted); }
+.wl-points > div { display: flex; justify-content: space-between; width: 100%; font-size: 14px; }
+.wl-points > div b { color: var(--gold); }
+
+.wl-give, .wl-act { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+.wl-give .row .primary { margin-top: 0; }
+.wl-act .hint { margin: 0; text-align: center; }
+.wl-act .primary { margin-top: 0; }
+.wl-give .row .primary { flex: 1; width: auto; }
