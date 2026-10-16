@@ -2165,3 +2165,32 @@ body[data-theme="cribbage"] button.primary {
 .cb-part ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--muted); }
 .cb-part li { display: flex; gap: 4px; }
 .cb-part li b { color: var(--ink); }
+
+/* ============================================================ a long shelf
+
+   Thirteen games no longer fit as a list of full-width cards, so the home
+   screen shows them as a two-column shelf of tiles — icon and name. The blurb
+   is on the setup screen a tap away. The screens that can now outgrow a phone
+   are centred with auto margins, not align-items, so their tops stay
+   scrollable instead of being pushed out of reach above the page. */
+
+#home, #setup { align-items: flex-start; }
+#home .landing, #setup .join-card { margin: auto 0; }
+
+.game-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.game-card {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 92px;
+  padding: 12px 8px 10px 12px;
+  text-align: center;
+}
+.game-card .gc-text { align-items: center; }
+.game-card .gc-text b { font-size: 15px; line-height: 1.2; }
+.game-card .gc-text i, .game-card .gc-go { display: none; }
+.game-card .gc-icon { font-size: 30px; }
+.game-card[data-for="trivia"]::before { background: #2fb8c9; }
+.game-card[data-for="runner"]::before { background: #ff7a3d; }
+.game-card[data-for="battleship"]::before { background: #3aa7d8; }

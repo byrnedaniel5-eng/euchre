@@ -608,7 +608,7 @@ npm install
 npm start          # http://localhost:3000
 ```
 
-Open it, enter a name, pick a game and hit **Open a lobby**. Send everyone else
+Open it, enter a name, pick a game from the shelf and hit **Open a lobby**. Send everyone else
 the four-letter code (the **Copy invite link** button uses the phone share
 sheet if there is one), then press **Start** when everyone is in.
 
@@ -770,6 +770,16 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
   computed background of all hundred enemy squares and fails if the untouched
   ones are not identical. A leak that only showed up as a shade would pass
   every other test in this repo.
+- `server/records-test.js` — the running score: tallies, draws, co-op games,
+  streaks, names that differ only in case, and how each game's result becomes
+  an entry.
+- One end-to-end suite per newer game — `connect4-e2e.js`,
+  `codenames-e2e.js`, `wavelength-e2e.js`, `knowme-e2e.js`, `dots-e2e.js`,
+  `wordle-e2e.js`, `yahtzee-e2e.js`, `cribbage-e2e.js`. Each checks the rules
+  on the engine directly, that nothing private reaches the wrong phone, that
+  the bot (where there is one) is a real ladder, and then plays whole games
+  over the wire, including a phone dropping and coming back, and that the
+  result reaches the running score.
 - `server/smoke-remote.js` — the same idea as the end-to-end test but pointed
   at a deployed URL: `npm run smoke https://your-app.onrender.com`.
 
@@ -777,26 +787,28 @@ npm run test:ui    # drives real Chrome, writes screenshots to shots/
 
 ```
 server/
-  index.js          express + ws wiring
+  index.js          express + ws wiring, and /records
   rooms.js          codes, seats, rejoin, leave, chat, ready gate  (game-agnostic)
+  records.js        the running score: entries, tallies, file or Upstash storage
   registry.js       which games exist
+  testkit.js        what the newer end-to-end suites share
   games/
-    euchre/
-      cards.js      card primitives, trump/bower logic, trick resolution
-      engine.js     the game state machine — no networking, no timers
-      bot.js        bidding, discarding, card play, difficulty levels
-      index.js      the game-module interface, with comments
-    draw/
-      words.js      prompts, guess matching
-      engine.js     turns, clock, scoring
-      index.js      module; relays ink outside the state broadcast
+    euchre/         cards, engine, bots, module — the reference module
+    draw/           prompts, turns and clock, ink relay
+    trivia/ runner/ battleship/
+    connect4/       engine, negamax bot
+    codenames/      words, the two-sided key
+    wavelength/     spectrum cards, dial scoring
+    knowme/         question deck, judging
+    dots/           lines and boxes, chain-counting bot
+    wordle/         answer and guess lists (with licence), marking
+    yahtzee/        rules and joker, simulating bot
+    cribbage/       counting, pegging, the show, discard bot
 public/
-  index.html        landing / setup / lobby / one section per game
-  app.js            the shell: socket, home screen, lobby, menu, leaving
+  index.html        landing / setup / lobby / scoreboard / one section per game
+  app.js            the shell: socket, home screen, lobby, menu, leaving, running score
   style.css
-  games/
-    euchre.js       renderer
-    draw.js         renderer + canvas
+  games/<id>.js     one renderer per game
 ```
 
 The server is authoritative. The browser never holds a hand it hasn't been
