@@ -2055,3 +2055,113 @@ body[data-theme="yahtzee"] button.primary {
 .yz-sheet tr.total td { font-size: 15px; font-weight: 800; background: #efe6cd; }
 .yz-sheet .prog { color: #8a8270; }
 .yz-actions .primary { white-space: nowrap; font-size: 15px; padding-left: 8px; padding-right: 8px; }
+
+/* ================================================================ cribbage */
+
+/* A pub table: dark oak and a brass-pegged board. */
+body[data-theme="cribbage"] {
+  --felt-1: #1f140c;
+  --felt-2: #3d2716;
+  --panel: #2b1c10;
+  --ink: #f8efe4;
+  --muted: #c7ab8e;
+  --gold: #e9b949;
+  --accent: #c8873a;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 9px),
+    radial-gradient(ellipse at 50% 20%, #4a2f1a, #1f140c 75%);
+}
+body[data-theme="cribbage"] button.primary {
+  background: linear-gradient(180deg, #e9b949, #c08a22);
+  color: #2a1a04;
+}
+.game-card[data-for="cribbage"]::before { background: #c8873a; }
+
+#game-cribbage { gap: 8px; overflow-y: auto; }
+/* Every size here is scoped to the screen, so each beats the one before it. */
+#game-cribbage .card { --cs: 1.15; }
+#game-cribbage .cb-hand .card { --cs: 1.25; }
+#game-cribbage .cb-backs .card { --cs: 0.55; }
+#game-cribbage .cb-cribcards .card { --cs: 0.7; }
+#game-cribbage .cb-part-cards .card { --cs: 0.82; }
+
+.cb-board { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.cb-lane { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.cb-who { width: 48px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.cb-lane.mine .cb-who { color: var(--ink); font-weight: 700; }
+.cb-track {
+  position: relative;
+  flex: 1;
+  height: 12px;
+  border-radius: 6px;
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0 2px, transparent 2px calc(100% / 24)), #6b4423;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.cb-mark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(233, 185, 73, 0.5); }
+.cb-peg {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #e8574b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  transition: left 0.6s ease-out;
+}
+.cb-lane.mine .cb-peg { background: #4fb3e8; }
+.cb-peg.back { opacity: 0.45; transform: scale(0.8); }
+.cb-score { width: 30px; text-align: right; font-weight: 800; font-size: 15px; color: var(--gold); }
+
+.cb-them { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.cb-them b { color: var(--gold); text-transform: uppercase; }
+.cb-backs { display: flex; }
+.cb-backs .card { margin-left: -14px; }
+.cb-backs .card:first-child { margin-left: 0; }
+
+.cb-table { display: flex; gap: 14px; align-items: flex-start; min-height: 120px; }
+.cb-side { display: flex; flex-direction: column; gap: 8px; }
+.cb-starter, .cb-crib { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); }
+.cb-cribcards { display: flex; }
+.cb-cribcards .card { margin-left: -24px; }
+.cb-cribcards .card:first-child { margin-left: 0; }
+.card.dim { opacity: 0.3; }
+.cb-play { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cb-count { display: flex; align-items: baseline; gap: 6px; min-height: 34px; }
+.cb-count b { font-size: 32px; line-height: 1; color: var(--gold); }
+.cb-count span { font-size: 12px; color: var(--muted); }
+.cb-pile { display: flex; flex-wrap: wrap; justify-content: center; }
+.cb-pile .card { margin-left: -22px; }
+.cb-pile .card:first-child { margin-left: 0; }
+.cb-pile .card.theirs { transform: translateY(-6px); }
+.cb-pile .card.mine { transform: translateY(6px); }
+
+.cb-shout {
+  align-self: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 15px;
+  background: rgba(233, 185, 73, 0.18);
+  border: 1px solid rgba(233, 185, 73, 0.5);
+  color: var(--gold);
+  animation: cb-shout 0.3s ease-out;
+}
+@keyframes cb-shout { from { transform: scale(0.7); opacity: 0; } }
+
+.cb-hand { display: flex; justify-content: center; gap: 5px; flex-wrap: nowrap; margin-top: auto; padding-top: 14px; }
+.cb-hand .card { cursor: pointer; transition: transform 0.12s; }
+.cb-hand .card.picked { transform: translateY(-14px); box-shadow: 0 0 0 3px var(--gold); }
+.cb-hand .card.dead { opacity: 0.45; }
+#cb-go { margin-top: 0; }
+#cb-hint { text-align: center; margin: 0; min-height: 1.2em; }
+
+.cb-show { display: flex; flex-direction: column; gap: 8px; }
+.cb-part { padding: 8px 10px; border-radius: 12px; background: rgba(0, 0, 0, 0.25); }
+.cb-part-head { display: flex; justify-content: space-between; align-items: baseline; }
+.cb-part-head span { font-size: 22px; font-weight: 800; color: var(--gold); }
+.cb-part-cards { display: flex; align-items: center; gap: 3px; margin: 4px 0; }
+.cb-part-cards .plus { margin: 0 3px; color: var(--muted); }
+.cb-part ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--muted); }
+.cb-part li { display: flex; gap: 4px; }
+.cb-part li b { color: var(--ink); }

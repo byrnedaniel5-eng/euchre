@@ -31,6 +31,8 @@ The games so far, and a running score between whoever plays them:
   each, all at once. You can watch their colours fill in, never their letters.
 - **Yahtzee** — five dice, three rolls, thirteen boxes, full rules. Two to
   four, or one against a bot.
+- **Cribbage** — fifteen two, fifteen four. Two players to 121, or one
+  against a bot, with every hand counted out for you.
 
 ## Looks
 
@@ -52,6 +54,7 @@ each rule is written once against them.
 | Dots & Boxes | Graphite and a yellow pencil, the board on notebook paper. |
 | Word Race | Newsprint at night: near-black with the familiar green and gold. |
 | Yahtzee | A green-baize dice table and a cream score pad. |
+| Cribbage | A pub table: dark oak and a brass-pegged board. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -524,6 +527,34 @@ scores a box for what it adds over that: three in Ones is fine, ten in Chance
 is a waste. Between rolls it tries all 32 ways of holding the dice and
 simulates the rerolls. Sharp averages about 195 a game and Casual about 170;
 the suite checks both and that the gap holds.
+
+## Cribbage
+
+Two players, six-card deal, first to 121. Throw two to the crib, cut (a jack
+is two for the dealer), peg through the play, then the show — and the game
+ends **the instant anybody reaches 121**, mid-play included, which is why the
+show goes in its proper order: non-dealer, dealer, crib. The suite sets up a
+hand where both players would peg out at the show and checks the non-dealer
+gets there first.
+
+The app counts every hand and the crib for you and lays out each fifteen,
+pair, run, flush and nob, so you can check it — or learn it. The play
+handles the go the way the rules do: if you cannot play without passing 31
+you say go, the other player carries on as far as they can, and the last card
+before the count resets pegs one (two at exactly 31, not three).
+
+Throwing and playing are both pick, then confirm. Cards use the same markup
+as euchre, so the card style and suit colours in the ⋯ menu apply here too.
+The peg board along the top keeps a front and a back peg for each player, as
+a real one does.
+
+Alone you play a bot. It discards by trying all fifteen ways to throw two and
+averaging what the kept four would count over every possible starter, with a
+rough allowance for the crib; it pegs by taking points when they are there
+and otherwise not leaving a count of 5 or 21. Sharp beats Casual about three
+games in four. The counting itself is checked against hands with known
+totals — the 29, a double double run, a crib that may not keep a four-card
+flush.
 
 ## The running score
 

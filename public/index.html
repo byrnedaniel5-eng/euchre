@@ -388,6 +388,30 @@
   <div id="yz-sheet" class="yz-sheet"></div>
 </section>
 
+<!-- -------------------------------------------------------- cribbage -->
+<section id="game-cribbage" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div id="cb-board" class="cb-board"></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="cb-them" class="cb-them"></div>
+  <div class="cb-table">
+    <div class="cb-side">
+      <div id="cb-starter" class="cb-starter"></div>
+      <div id="cb-crib" class="cb-crib"></div>
+    </div>
+    <div class="cb-play">
+      <div id="cb-count" class="cb-count"></div>
+      <div id="cb-pile" class="cb-pile"></div>
+    </div>
+  </div>
+  <div id="cb-shout" class="cb-shout" hidden></div>
+  <div id="cb-show" class="cb-show" hidden></div>
+  <p id="cb-hint" class="hint"></p>
+  <div id="cb-hand" class="hand cb-hand"></div>
+  <button id="cb-go" class="primary" hidden></button>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -454,6 +478,7 @@
 <script src="games/dots.js"></script>
 <script src="games/wordle.js"></script>
 <script src="games/yahtzee.js"></script>
+<script src="games/cribbage.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

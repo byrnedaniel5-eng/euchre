@@ -14,8 +14,9 @@ import knowme from './games/knowme/index.js';
 import dots from './games/dots/index.js';
 import wordle from './games/wordle/index.js';
 import yahtzee from './games/yahtzee/index.js';
+import cribbage from './games/cribbage/index.js';
 
-const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength, knowme, dots, wordle, yahtzee];
+const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength, knowme, dots, wordle, yahtzee, cribbage];
 const BY_ID = new Map(MODULES.map((m) => [m.id, m]));
 
 export const games = () => MODULES;
