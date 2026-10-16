@@ -4,7 +4,7 @@ Games for people on their own phones, usually while already on a video call.
 The app holds the private information — your hand, your prompt — and gets out
 of the way; the talking is the game.
 
-Five games so far, and a running score between whoever plays them:
+The games so far, and a running score between whoever plays them:
 
 - **Euchre** — trick-taking to ten, one to four people, bots filling any empty
   seat.
@@ -17,6 +17,8 @@ Five games so far, and a running score between whoever plays them:
   alone it is a time trial, which is also how you learn a course.
 - **Battleships** — hide five ships, then hunt somebody else's down square by
   square. Two to four fleets, or one bot to practise against.
+- **Connect Four** — drop discs, line up four. Two people, or one against a
+  bot at three strengths.
 
 ## Looks
 
@@ -31,6 +33,7 @@ each rule is written once against them.
 | Quiz Wheel | Teal, so the coloured wheel has somewhere to sit. |
 | Lava Run | Ember and dusk, lit from below. |
 | Battleships | Cold open water. |
+| Connect Four | A red toy-box room, so the blue board is what you look at. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -330,6 +333,29 @@ thinks:
 A person averages somewhere around 50, so casual is a fair game and sharp is a
 hard one. Both chase properly once they find something: around a lone hit, and
 along the line as soon as two hits line up.
+
+## Connect Four
+
+Seven by six, four in a line. Two things worth saying:
+
+**Who starts swaps every game.** The first player has a forced win with
+perfect play, so a rematch hands the opening move to whoever went second.
+
+**The bot looks ahead.** It is a negamax search with alpha-beta pruning,
+scoring the board it reaches by open threes and twos. Difficulty is how far
+it looks and how often it fumbles — but every level takes a win that is sitting
+there and blocks one that is about to happen, because a bot that walks past
+four in a row is not easy, it is broken.
+
+| | Looks ahead | Random moves | Measured |
+|---|---|---|---|
+| Easy | 2 | 35% | loses to Casual about 4 games in 5 |
+| Casual | 4 | 10% | loses to Sharp about 4 games in 5 |
+| Sharp | 8 | never | about 80ms a move on a laptop |
+
+`connect4-e2e.js` checks wins in all four directions, a genuine 42-disc draw,
+that even Easy blocks, that the ladder is real, and two people over the wire —
+a rematch going to the other player, and a disc surviving a dropped phone.
 
 ## The running score
 

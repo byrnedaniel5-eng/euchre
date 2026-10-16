@@ -1489,3 +1489,91 @@ body[data-theme="battleship"] {
    reachable instead of being pushed off-screen above the scroll origin. */
 #lobby { overflow-y: auto; align-items: flex-start; }
 #lobby .join-card { margin: auto 0; }
+
+/* ============================================================ new games: shared
+   The header every newer game uses: something on each side, the state of play
+   in the middle, the menu on the right. */
+
+.g-hud { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.g-turn {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================ connect four */
+
+/* A toy-box red room, so the blue board is the thing you look at. */
+body[data-theme="connect4"] {
+  --felt-1: #1a0f14;
+  --felt-2: #3a1622;
+  --panel: #2a1219;
+  --ink: #fbeff2;
+  --muted: #c49aa6;
+  --gold: #ffcc33;
+  --accent: #ff4d5e;
+  background:
+    radial-gradient(900px 560px at 50% -5%, rgba(255, 77, 94, 0.22), transparent 65%),
+    linear-gradient(180deg, #2c121b, #1a0f14 70%);
+}
+body[data-theme="connect4"] button.primary {
+  background: linear-gradient(180deg, #ff6b78, #d93a4a);
+  color: #fff;
+}
+.game-card[data-for="connect4"]::before { background: #ff4d5e; }
+
+#game-connect4 { gap: 10px; }
+.c4-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 34%;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.c4-chip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c4-chip i { flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%; }
+.c4-chip.red i { background: #ff4d5e; }
+.c4-chip.yellow i { background: #ffcc33; }
+.c4-chip.on { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(255, 204, 51, 0.25); }
+
+.c4-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.c4-board {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  width: 100%;
+  /* Height follows from the width (six square cells a column), so on a short
+     phone it is the width that has to give. */
+  max-width: min(100%, calc((100dvh - 150px) * 7 / 6));
+  padding: 8px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #2d64e0, #1d47b0);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 2px 0 rgba(255, 255, 255, 0.15);
+  touch-action: manipulation;
+}
+.c4-col { display: flex; flex-direction: column; gap: 5px; border-radius: 10px; cursor: pointer; }
+.c4-col.live:active { background: rgba(255, 255, 255, 0.12); }
+.c4-cell { position: relative; aspect-ratio: 1; border-radius: 50%; background: #0f1c3d; box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.55); }
+.c4-cell i { position: absolute; inset: 0; border-radius: 50%; }
+.c4-cell.red i { background: radial-gradient(circle at 35% 30%, #ff8a94, #e8394a 60%, #b8202f); }
+.c4-cell.yellow i { background: radial-gradient(circle at 35% 30%, #fff0a8, #ffcc33 60%, #d9a210); }
+.c4-cell.win i { animation: c4-pulse 0.9s ease-in-out infinite alternate; box-shadow: 0 0 0 3px #fff; }
+/* The newest disc falls from above the board to where it landed; --fall is
+   how many slots it drops through. */
+.c4-cell.drop i { animation: c4-fall calc(0.12s + var(--fall) * 0.05s) cubic-bezier(0.5, 0, 1, 1); }
+@keyframes c4-fall {
+  from { transform: translateY(calc(var(--fall) * -110%)); }
+  to { transform: translateY(0); }
+}
+@keyframes c4-pulse { to { transform: scale(0.82); } }

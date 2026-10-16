@@ -264,6 +264,20 @@
   </div>
 </section>
 
+<!-- ---------------------------------------------------- connect four -->
+<section id="game-connect4" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div id="c4-you" class="c4-chip"></div>
+    <div id="c4-turn" class="g-turn"></div>
+    <div id="c4-them" class="c4-chip"></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div class="c4-stage">
+    <div id="c4-board" class="c4-board"></div>
+  </div>
+  <p id="c4-hint" class="hint"></p>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -323,6 +337,7 @@
 <script src="games/runner-level.js"></script>
 <script src="games/runner.js"></script>
 <script src="games/battleship.js"></script>
+<script src="games/connect4.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

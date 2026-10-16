@@ -127,6 +127,7 @@
     trivia: 'Two to eight people, all racing the same question.',
     runner: 'One to eight. Alone it is a time trial; together you run side by side.',
     battleship: 'Two to four fleets. On your own you get a bot to sink instead.',
+    connect4: 'Two people, or one against the bot. Who starts swaps every game.',
   };
 
   function renderHome() {
@@ -233,7 +234,7 @@
   // Each screen carries a look, so it is obvious at a glance which game you
   // are in — the hub is not a card table, and the drawing game is not green.
   const THEME_COLOR = { home: '#12141d', euchre: '#12261c', draw: '#17102a',
-    trivia: '#0d1c24', runner: '#170d1e', battleship: '#08131f' };
+    trivia: '#0d1c24', runner: '#170d1e', battleship: '#08131f', connect4: '#1a0f14' };
 
   function setTheme(name) {
     document.body.dataset.theme = name;
@@ -404,6 +405,10 @@
       $('records-list').innerHTML = '<p class="hint">Could not reach the scoreboard.</p>';
     }
   }
+
+  // A game that holds its overlay back (to let a winning line be seen first)
+  // says when it finally shows, so the all-time line can join it.
+  window.addEventListener('overlay-shown', () => { if (state) renderRecordLine(); });
 
   $('open-records').onclick = showRecords;
   $('records-back').onclick = () => showScreen('home');

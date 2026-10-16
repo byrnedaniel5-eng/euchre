@@ -7,8 +7,9 @@ import draw from './games/draw/index.js';
 import trivia from './games/trivia/index.js';
 import runner from './games/runner/index.js';
 import battleship from './games/battleship/index.js';
+import connect4 from './games/connect4/index.js';
 
-const MODULES = [euchre, draw, trivia, runner, battleship];
+const MODULES = [euchre, draw, trivia, runner, battleship, connect4];
 const BY_ID = new Map(MODULES.map((m) => [m.id, m]));
 
 export const games = () => MODULES;
