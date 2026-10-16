@@ -1761,3 +1761,93 @@ body[data-theme="wavelength"] button.primary {
 .wl-act .hint { margin: 0; text-align: center; }
 .wl-act .primary { margin-top: 0; }
 .wl-give .row .primary { flex: 1; width: auto; }
+
+/* ================================================================= know me */
+
+/* Late-night conversation: deep plum, warm pink. */
+body[data-theme="knowme"] {
+  --felt-1: #1d0e1a;
+  --felt-2: #3b1735;
+  --panel: #2a1327;
+  --ink: #fcf0f7;
+  --muted: #c49bb8;
+  --gold: #ffc2dc;
+  --accent: #ff5fa2;
+  background:
+    radial-gradient(900px 560px at 50% -10%, rgba(255, 95, 162, 0.22), transparent 65%),
+    linear-gradient(180deg, #33142e, #1d0e1a 70%);
+}
+body[data-theme="knowme"] button.primary {
+  background: linear-gradient(180deg, #ff7cb4, #e0467f);
+  color: #fff;
+}
+.game-card[data-for="knowme"]::before { background: #ff5fa2; }
+
+#game-knowme { gap: 10px; overflow-y: auto; }
+.km-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 18px 16px;
+  text-align: center;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(255, 95, 162, 0.18), rgba(0, 0, 0, 0.2));
+  border: 1px solid rgba(255, 194, 220, 0.25);
+}
+.km-asker { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.km-q { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.25; }
+.km-kind { font-size: 12px; color: var(--muted); }
+.km-kind:empty { display: none; }
+
+.km-body { display: flex; flex-direction: column; gap: 10px; }
+.km-options { display: flex; flex-direction: column; gap: 8px; }
+.km-opt { width: 100%; font-size: 17px; padding: 14px; }
+.km-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.km-scale .km-opt { font-size: 22px; padding: 14px 0; }
+.km-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.km-form { display: flex; flex-direction: column; gap: 8px; }
+.km-form .primary { margin-top: 0; }
+.km-form .row .primary { flex: 1; width: auto; }
+.km-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.km-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.km-done span { font-size: 12px; color: var(--muted); }
+.km-done b { font-size: 22px; text-align: center; word-break: break-word; }
+.km-done.truth b { color: var(--gold); }
+
+.km-judge { display: flex; flex-direction: column; gap: 6px; }
+.km-guess {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.km-guess > span { display: flex; flex-direction: column; min-width: 0; font-size: 16px; word-break: break-word; }
+.km-guess > span i { font-style: normal; font-size: 11px; color: var(--muted); }
+.km-guess > b { flex: 0 0 auto; font-size: 15px; }
+.km-guess.right { border-color: rgba(80, 210, 140, 0.6); }
+.km-guess.right > b { color: #7be0a6; }
+.km-guess.close { border-color: rgba(255, 200, 90, 0.6); }
+.km-guess.close > b { color: #ffd27a; }
+.km-guess.wrong > b { color: var(--muted); }
+.km-marks { display: flex; gap: 4px; flex: 0 0 auto; }
+.km-marks button { padding: 8px 12px; font-size: 16px; }
+.km-marks button.on.right { background: rgba(80, 210, 140, 0.35); border-color: #50d28c; }
+.km-marks button.on.close { background: rgba(255, 200, 90, 0.3); border-color: #ffc85a; }
+.km-marks button.on.wrong { background: rgba(217, 83, 79, 0.3); border-color: #d9534f; }
+
+.km-foot { margin-top: auto; }
+.km-foot .primary { margin-top: 0; }

@@ -23,6 +23,8 @@ The games so far, and a running score between whoever plays them:
   you clue each other towards fifteen agents and away from the assassins.
 - **Wavelength** — one of you sees where a hidden target sits between two
   opposites and gives a clue; the other turns a dial to find it.
+- **Know Me** — how well do you know each other? One of you answers a
+  question about yourself, everyone else predicts it.
 
 ## Looks
 
@@ -40,6 +42,7 @@ each rule is written once against them.
 | Connect Four | A red toy-box room, so the blue board is what you look at. |
 | Codenames Duet | A field office after dark: olive-black, words on cream card stock. |
 | Wavelength | A seventies game-show set: chocolate brown, the dial in warm oranges. |
+| Know Me | Late-night conversation: deep plum and warm pink. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -420,6 +423,35 @@ straight face while your partner wanders the wrong way is half of the boxed
 game, and on a video call it is most of it. Those moves go to the psychic's
 phone alone through a small `sendTo(seat)` on the room layer; the suite
 checks a third player receives nothing.
+
+## Know Me
+
+Each round one person is the subject. They get a question about themselves —
+they can swap it up to three times, or write their own — and then everyone
+answers at once: the subject truthfully, everyone else predicting what the
+subject will say. Nothing is shown until everyone is in.
+
+Three kinds of question:
+
+| | You answer with | Scoring |
+|---|---|---|
+| Choice | one of two to five options | right is 2 |
+| Scale | one to five, with words at each end | exact is 2, one off is 1 |
+| Free text | anything | the subject marks each guess right (2), close (1) or wrong |
+
+Free-text guesses that match the subject's answer once case and punctuation
+are stripped are marked right automatically; only the rest go to the subject.
+
+**Only the guessers score.** Everyone is the subject the same number of times,
+so the winner is simply whoever knows the others best — and with two people,
+paying the subject as well would make every game a tie.
+
+**Questions are shown as the subject asking them** ("Sam asks: What's my
+comfort food?"), so "my" means the same person on every phone. The **Couples**
+deck adds questions that only make sense between partners — "Who said I love
+you first?" — and with two players their *Me* and *You* options turn into
+names, because *You* on the guesser's phone would otherwise mean the wrong
+person.
 
 ## The running score
 

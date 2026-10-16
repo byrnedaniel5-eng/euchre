@@ -10,8 +10,9 @@ import battleship from './games/battleship/index.js';
 import connect4 from './games/connect4/index.js';
 import codenames from './games/codenames/index.js';
 import wavelength from './games/wavelength/index.js';
+import knowme from './games/knowme/index.js';
 
-const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength];
+const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength, knowme];
 const BY_ID = new Map(MODULES.map((m) => [m.id, m]));
 
 export const games = () => MODULES;

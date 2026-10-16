@@ -329,6 +329,23 @@
   </div>
 </section>
 
+<!-- --------------------------------------------------------- know me -->
+<section id="game-knowme" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div class="turn-pill"><span id="km-round"></span></div>
+    <div id="km-status" class="g-turn"></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="km-scores" class="draw-scores"></div>
+  <div class="km-card">
+    <span id="km-asker" class="km-asker"></span>
+    <p id="km-q" class="km-q"></p>
+    <span id="km-kind" class="km-kind"></span>
+  </div>
+  <div id="km-body" class="km-body"></div>
+  <div id="km-foot" class="km-foot"></div>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -391,6 +408,7 @@
 <script src="games/connect4.js"></script>
 <script src="games/codenames.js"></script>
 <script src="games/wavelength.js"></script>
+<script src="games/knowme.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>
