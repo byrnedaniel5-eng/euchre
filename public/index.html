@@ -278,6 +278,29 @@
   <p id="c4-hint" class="hint"></p>
 </section>
 
+<!-- -------------------------------------------------- codenames duet -->
+<section id="game-codenames" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div class="turn-pill"><span id="cn-turns"></span></div>
+    <div id="cn-status" class="g-turn"></div>
+    <div class="turn-pill"><span id="cn-found"></span></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="cn-clue" class="cn-clue" hidden></div>
+  <div id="cn-grid" class="cn-grid"></div>
+  <div id="cn-legend" class="cn-legend"></div>
+  <form id="cn-give" class="cn-give" hidden>
+    <input id="cn-word" maxlength="24" placeholder="One-word clue" autocomplete="off"
+           autocorrect="off" autocapitalize="characters" spellcheck="false">
+    <div id="cn-num" class="cn-num"></div>
+    <button type="submit" class="primary" id="cn-send">Give clue</button>
+  </form>
+  <div id="cn-act" class="cn-act" hidden>
+    <p id="cn-hint" class="hint"></p>
+    <button id="cn-stop" class="ghost wide">End turn</button>
+  </div>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -338,6 +361,7 @@
 <script src="games/runner.js"></script>
 <script src="games/battleship.js"></script>
 <script src="games/connect4.js"></script>
+<script src="games/codenames.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

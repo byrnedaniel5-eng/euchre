@@ -19,6 +19,8 @@ The games so far, and a running score between whoever plays them:
   square. Two to four fleets, or one bot to practise against.
 - **Connect Four** — drop discs, line up four. Two people, or one against a
   bot at three strengths.
+- **Codenames Duet** — the co-op word game. Each phone holds half the key;
+  you clue each other towards fifteen agents and away from the assassins.
 
 ## Looks
 
@@ -34,6 +36,7 @@ each rule is written once against them.
 | Lava Run | Ember and dusk, lit from below. |
 | Battleships | Cold open water. |
 | Connect Four | A red toy-box room, so the blue board is what you look at. |
+| Codenames Duet | A field office after dark: olive-black, words on cream card stock. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -356,6 +359,41 @@ four in a row is not easy, it is broken.
 `connect4-e2e.js` checks wins in all four directions, a genuine 42-disc draw,
 that even Easy blocks, that the ladder is real, and two people over the wire —
 a rematch going to the other player, and a disc surviving a dropped phone.
+
+## Codenames Duet
+
+The two-player co-op version: twenty-five words, one key card with two sides,
+and **each phone holds only its own side**. Nine of your words are your
+agents, three are assassins. You take turns giving a one-word clue and a
+number; the other taps words until they hit something that is not one of
+your agents. Find all fifteen agents between you before the turns run out.
+
+The sides overlap exactly as the boxed key card does — three agents shared,
+one assassin shared, and one of each of your assassins is an agent on the
+other side — so the test deals two hundred keys and checks every count.
+
+**The server never sends your partner's key to your phone** until the game is
+over. The end-to-end suite plays a whole game perfectly (the test can read
+both phones; neither phone can) and fails if any state before the end carried
+the other key.
+
+What the app decides, so nobody has to argue about it:
+
+- **A clue may not be a word on the board, or share its stem** — PEN with
+  PENGUIN on the table is refused, ART with HEART is allowed.
+- **Guessing is tap, then tap again.** One stray thumb on an assassin ends the
+  game for both of you.
+- **Wrong guesses mark a bystander on the clue-giver's side only.** The word
+  stays in play from the other side, as on the real card, with a small tan
+  dot in that side's corner.
+- **When one of you has no agents left**, the other gives every clue from then
+  on, and a turn ends by itself the moment its clue-giver's last agent is found.
+- **Out of turns is sudden death**: no more clues, either of you may tap a
+  word you think is your partner's agent, and any miss loses.
+- **Turns** is a setup option: 11 gentle, 9 standard, 7 tough.
+
+A win or a loss goes on the running score as something you did together, and
+is kept out of the head-to-head.
 
 ## The running score
 

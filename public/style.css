@@ -1577,3 +1577,111 @@ body[data-theme="connect4"] button.primary {
   to { transform: translateY(0); }
 }
 @keyframes c4-pulse { to { transform: scale(0.82); } }
+
+/* ========================================================== codenames duet */
+
+/* A field office after dark: olive-black, with the words on cream card stock. */
+body[data-theme="codenames"] {
+  --felt-1: #0f1411;
+  --felt-2: #1f2a22;
+  --panel: #19221c;
+  --ink: #eef2ea;
+  --muted: #9aab9c;
+  --gold: #e9d8a6;
+  --accent: #3fbf7f;
+  background:
+    radial-gradient(900px 540px at 50% -10%, rgba(63, 191, 127, 0.16), transparent 65%),
+    linear-gradient(180deg, #1b241e, #0f1411 70%);
+}
+body[data-theme="codenames"] button.primary {
+  background: linear-gradient(180deg, #4fd08f, #2e9a64);
+  color: #04170c;
+}
+.game-card[data-for="codenames"]::before { background: #3fbf7f; }
+
+#game-codenames { gap: 8px; }
+
+.cn-clue {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(233, 216, 166, 0.1);
+  border: 1px solid rgba(233, 216, 166, 0.3);
+  flex: 0 0 auto;
+}
+.cn-clue b { font-size: 22px; letter-spacing: 0.06em; color: var(--gold); }
+.cn-clue i { font-style: normal; font-size: 22px; font-weight: 800; }
+.cn-clue span { font-size: 12px; color: var(--muted); }
+
+.cn-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  flex: 0 0 auto;
+}
+.cn-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: clamp(48px, 9.5dvh, 74px);
+  padding: 4px 2px 9px;
+  border-radius: 8px;
+  background: #efe6cf;
+  border: 1px solid #cdbf9c;
+  color: #2a2418;
+  overflow: hidden;
+  container-type: inline-size;
+  transition: transform 0.12s, background 0.2s, opacity 0.2s;
+}
+.cn-card .w {
+  display: block;
+  max-width: 100%;
+  /* Fit the word to the card: a bold capital is about 0.7em wide. */
+  font-size: min(14px, calc((100cqw - 4px) / (var(--len, 6) * 0.7)));
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cn-card.live { cursor: pointer; }
+.cn-card.aim { transform: scale(1.06); box-shadow: 0 0 0 3px var(--gold), 0 6px 16px rgba(0, 0, 0, 0.5); z-index: 1; }
+.cn-card.found { background: linear-gradient(180deg, #3fbf7f, #2a8a59); border-color: #2a8a59; color: #fff; }
+.cn-card.dead, .cn-card.spent { background: #6f6754; border-color: #6f6754; color: #d7cfb9; opacity: 0.55; }
+.cn-card.spent { opacity: 0.75; }
+.cn-card.boom { background: #111; border-color: #e5484d; color: #ff9b9e; }
+.cn-card.miss { background: #8a7e60; color: #fff; }
+.cn-card.flash { animation: cn-flash 0.7s ease-out; }
+@keyframes cn-flash { 0% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+/* Your half of the key, as a strip along the foot of each word. At the end,
+   two strips: yours on the left, theirs on the right. */
+.kb { position: absolute; left: 6px; right: 6px; bottom: 3px; display: flex; gap: 3px; height: 4px; }
+.kb i { flex: 1; border-radius: 2px; }
+.k-A { background: #2fae6c; }
+.k-X { background: #111; box-shadow: 0 0 0 1px #e5484d; }
+.k-N { background: transparent; }
+.cn-card.found .k-A { background: #c9f5dc; }
+
+/* A bystander token from either side: a small tan disc in the top corner. */
+.tok { position: absolute; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: #b9a67a; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.tok.mine { left: 4px; }
+.tok.theirs { right: 4px; }
+
+.cn-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--muted); }
+.cn-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.cn-legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; }
+
+.cn-give { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.cn-give input { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; text-align: center; }
+.cn-give .primary { margin-top: 0; }
+.cn-num { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+.cn-num button { padding: 9px 0; font-size: 15px; }
+.cn-num button.on { background: color-mix(in srgb, var(--accent) 35%, transparent); border-color: var(--accent); }
+.cn-act { margin-top: auto; }
+.cn-act .hint { margin: 0 0 4px; text-align: center; }
+#ov-tricks .ghost { margin-top: 4px; }

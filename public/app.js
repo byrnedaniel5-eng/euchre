@@ -128,6 +128,7 @@
     runner: 'One to eight. Alone it is a time trial; together you run side by side.',
     battleship: 'Two to four fleets. On your own you get a bot to sink instead.',
     connect4: 'Two people, or one against the bot. Who starts swaps every game.',
+    codenames: 'Two people, one team. You each see half the key.',
   };
 
   function renderHome() {
@@ -234,7 +235,8 @@
   // Each screen carries a look, so it is obvious at a glance which game you
   // are in — the hub is not a card table, and the drawing game is not green.
   const THEME_COLOR = { home: '#12141d', euchre: '#12261c', draw: '#17102a',
-    trivia: '#0d1c24', runner: '#170d1e', battleship: '#08131f', connect4: '#1a0f14' };
+    trivia: '#0d1c24', runner: '#170d1e', battleship: '#08131f', connect4: '#1a0f14',
+    codenames: '#0f1411' };
 
   function setTheme(name) {
     document.body.dataset.theme = name;
