@@ -2194,3 +2194,17 @@ body[data-theme="cribbage"] button.primary {
 .game-card[data-for="trivia"]::before { background: #2fb8c9; }
 .game-card[data-for="runner"]::before { background: #ff7a3d; }
 .game-card[data-for="battleship"]::before { background: #3aa7d8; }
+
+/* Dice: smaller, capped, and inset from the edges. Filling the full width left
+   a held die's ring and shadow hanging off the side of an iPhone, and minmax(0)
+   stops Safari's button min-content from widening a column. */
+.yz-dice {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 330px;
+  margin: 0 auto;
+  padding: 14px 14px 0;
+  box-sizing: border-box;
+}
+.yz-die { padding: 9px; min-width: 0; }
