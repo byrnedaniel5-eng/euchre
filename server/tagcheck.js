@@ -17,6 +17,8 @@ const CDP_PORT = 9335;
 const CHROME = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/usr/bin/google-chrome',
 ].find((p) => fs.existsSync(p));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -52,7 +54,7 @@ const server = spawn(process.execPath, [path.join(__dirname, 'index.js')], {
 });
 await new Promise((res, rej) => {
   const t = setTimeout(() => rej(new Error('server never started')), 10000);
-  server.stdout.on('data', (d) => { if (d.toString().includes('Euchre running')) { clearTimeout(t); res(); } });
+  server.stdout.on('data', (d) => { if (d.toString().includes('running on http')) { clearTimeout(t); res(); } });
 });
 
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'euchre-tag-'));

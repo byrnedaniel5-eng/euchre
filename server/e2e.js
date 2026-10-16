@@ -156,7 +156,7 @@ try {
   await new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error('server never started')), 10000);
     server.stdout.on('data', (d) => {
-      if (d.toString().includes('Euchre running')) { clearTimeout(t); resolve(); }
+      if (d.toString().includes('running on http')) { clearTimeout(t); resolve(); }
     });
   });
 

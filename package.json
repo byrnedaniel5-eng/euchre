@@ -1,7 +1,7 @@
 {
   "name": "game-night",
   "version": "1.0.0",
-  "description": "Euchre, Draw It, Quiz Wheel and Lava Run, for phones on a video call",
+  "description": "Euchre, Draw It, Quiz Wheel, Lava Run and Battleships, for phones on a video call",
   "type": "module",
   "main": "server/index.js",
   "scripts": {

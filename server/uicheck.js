@@ -18,6 +18,8 @@ const SHOT_DIR = process.env.SHOT_DIR || path.join(__dirname, '..', 'shots');
 const CHROME = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/usr/bin/google-chrome',
 ].find((p) => fs.existsSync(p));
 
 fs.mkdirSync(SHOT_DIR, { recursive: true });
@@ -110,7 +112,7 @@ const server = spawn(process.execPath, [path.join(__dirname, 'index.js')], {
 await new Promise((resolve, reject) => {
   const t = setTimeout(() => reject(new Error('server never started')), 10000);
   server.stdout.on('data', (d) => {
-    if (d.toString().includes('Euchre running')) { clearTimeout(t); resolve(); }
+    if (d.toString().includes('running on http')) { clearTimeout(t); resolve(); }
   });
 });
 console.log(`server up on ${PORT}`);

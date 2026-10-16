@@ -159,10 +159,15 @@ console.log('\n4. the bot cannot see through the water');
 
 console.log('\n5. the bot plays properly');
 {
+  // 400 games a side. Sharp averages about 44.5 shots and casual about 54.5;
+  // the bar used to be a fixed "sharp under 45", which sat on sharp's own mean
+  // and so failed on luck alone about one run in three. The claim worth making
+  // is the gap between the two, which is ten shots against a noise of about one.
+  const means = {};
   for (const key of ['casual', 'sharp']) {
     const skill = skillByKey(key);
     const shots = [];
-    for (let n = 0; n < 120; n++) {
+    for (let n = 0; n < 400; n++) {
       const b = laidOut();
       let fired = 0;
       while (!fleetDestroyed(b) && fired < CELLS) {
@@ -171,15 +176,14 @@ console.log('\n5. the bot plays properly');
       }
       shots.push(fired);
     }
-    const mean = shots.reduce((a, c) => a + c, 0) / shots.length;
+    means[key] = shots.reduce((a, c) => a + c, 0) / shots.length;
     const worst = Math.max(...shots);
     assert(worst <= CELLS, `${key}: always clears the board (worst ${worst} shots)`);
-    if (key === 'casual') {
-      assert(mean > 42 && mean < 58, `casual takes about as long as a person (${mean.toFixed(1)})`);
-    } else {
-      assert(mean < 45, `sharp is meaningfully better (${mean.toFixed(1)})`);
-    }
   }
+  assert(means.casual > 48 && means.casual < 60,
+    `casual takes about as long as a person (${means.casual.toFixed(1)})`);
+  assert(means.casual - means.sharp > 6,
+    `sharp is meaningfully better (${means.sharp.toFixed(1)} against ${means.casual.toFixed(1)})`);
 
   // Chasing works: after one hit, the follow-up must be next to it.
   const b = newBoard();

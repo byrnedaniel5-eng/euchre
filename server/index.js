@@ -167,5 +167,5 @@ server.on('close', () => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Euchre running on http://localhost:${PORT}`);
+  console.log(`Game Night running on http://localhost:${PORT}`);
 });

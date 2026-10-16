@@ -18,6 +18,8 @@ const SHOT_DIR = process.env.SHOT_DIR || path.join(__dirname, '..', 'shots');
 const CHROME = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/usr/bin/google-chrome',
 ].find((p) => fs.existsSync(p));
 
 fs.mkdirSync(SHOT_DIR, { recursive: true });

@@ -324,8 +324,8 @@ thinks:
 
 | | Hunting | Shots to clear a fleet |
 |---|---|---|
-| Casual | The odd/even lattice, plus the occasional slip | ~55 |
-| Sharp | Counts how many ways each remaining ship could still lie across each square | ~43 |
+| Casual | The odd/even lattice, plus the occasional slip | ~54 |
+| Sharp | Counts how many ways each remaining ship could still lie across each square | ~45 |
 
 A person averages somewhere around 50, so casual is a fair game and sharp is a
 hard one. Both chase properly once they find something: around a lone hit, and
