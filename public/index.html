@@ -346,6 +346,18 @@
   <div id="km-foot" class="km-foot"></div>
 </section>
 
+<!-- ---------------------------------------------------- dots & boxes -->
+<section id="game-dots" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div class="turn-pill"><span id="db-left"></span></div>
+    <div id="db-turn" class="g-turn"></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="db-scores" class="draw-scores"></div>
+  <div class="db-stage"><svg id="db-board" class="db-board"></svg></div>
+  <p id="db-hint" class="hint"></p>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -409,6 +421,7 @@
 <script src="games/codenames.js"></script>
 <script src="games/wavelength.js"></script>
 <script src="games/knowme.js"></script>
+<script src="games/dots.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

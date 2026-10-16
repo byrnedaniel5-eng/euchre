@@ -25,6 +25,8 @@ The games so far, and a running score between whoever plays them:
   opposites and gives a clue; the other turns a dial to find it.
 - **Know Me** — how well do you know each other? One of you answers a
   question about yourself, everyone else predicts it.
+- **Dots & Boxes** — draw lines, close boxes, go again. Two to four, or one
+  against a bot.
 
 ## Looks
 
@@ -43,6 +45,7 @@ each rule is written once against them.
 | Codenames Duet | A field office after dark: olive-black, words on cream card stock. |
 | Wavelength | A seventies game-show set: chocolate brown, the dial in warm oranges. |
 | Know Me | Late-night conversation: deep plum and warm pink. |
+| Dots & Boxes | Graphite and a yellow pencil, the board on notebook paper. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -452,6 +455,26 @@ deck adds questions that only make sense between partners — "Who said I love
 you first?" — and with two players their *Me* and *You* options turn into
 names, because *You* on the guesser's phone would otherwise mean the wrong
 person.
+
+## Dots & Boxes
+
+Three board sizes (3×3, 4×4, 5×5 boxes), two to four players, or one against
+a bot. Close the fourth side of a box and it is yours, and you draw again.
+Lines are **tap to aim, tap again to draw**: handing over a box with a stray
+thumb is the exact mistake this game punishes, so it should never be the
+app's fault. Who draws first moves round each game.
+
+The bot plays the one idea the game turns on — never draw the third side of a
+box:
+
+| | Takes a free box | Avoids third sides | When forced |
+|---|---|---|---|
+| Easy | 85% of the time | about half the time | anything |
+| Casual | always | always | anything |
+| Sharp | always | always | gives away the fewest boxes it can |
+
+Over 400 games on 4×4, Casual beats Easy about 12 to 1 and Sharp beats Casual
+about 5 to 1; the suite asserts both gaps.
 
 ## The running score
 

@@ -1851,3 +1851,41 @@ body[data-theme="knowme"] button.primary {
 
 .km-foot { margin-top: auto; }
 .km-foot .primary { margin-top: 0; }
+
+/* ============================================================ dots & boxes */
+
+/* Graphite and a yellow pencil, with the board on notebook paper. */
+body[data-theme="dots"] {
+  --felt-1: #17171a;
+  --felt-2: #2a2a2f;
+  --panel: #212126;
+  --ink: #f3f3f0;
+  --muted: #a5a5a0;
+  --gold: #ffd43b;
+  --accent: #ffd43b;
+  background:
+    radial-gradient(900px 560px at 50% -10%, rgba(255, 212, 59, 0.12), transparent 65%),
+    linear-gradient(180deg, #232327, #17171a 70%);
+}
+body[data-theme="dots"] button.primary {
+  background: linear-gradient(180deg, #ffe066, #f0b800);
+  color: #2b2100;
+}
+.game-card[data-for="dots"]::before { background: #ffd43b; }
+
+#game-dots { gap: 10px; }
+.db-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.db-board { width: 100%; max-width: min(100%, calc(100dvh - 190px)); touch-action: manipulation; }
+.db-paper { fill: #f7f2e4; }
+.db-dot { fill: #2b2b30; }
+.db-line { stroke-width: 9; stroke-linecap: round; }
+.db-line.fresh { animation: db-ink 0.35s ease-out; }
+.db-line.aim { stroke-dasharray: 10 10; opacity: 0.85; }
+.db-hit { stroke: transparent; stroke-width: 40; cursor: pointer; }
+.db-box text { font-size: 42px; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
+.db-box.pop { animation: db-pop 0.4s ease-out; transform-box: fill-box; transform-origin: center; }
+@keyframes db-ink { from { stroke-width: 18; opacity: 0.4; } }
+@keyframes db-pop { from { transform: scale(0.4); opacity: 0; } }
+.db-chip { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 50%; background: var(--ink); }
+#db-scores .ds b { display: inline-flex; align-items: center; }
+#db-hint { text-align: center; }

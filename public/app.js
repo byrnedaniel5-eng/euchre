@@ -131,6 +131,7 @@
     codenames: 'Two people, one team. You each see half the key.',
     wavelength: 'Two people play together for one score. Three or more, everyone for themselves.',
     knowme: 'Two to eight. Pick Couples for the two of you.',
+    dots: 'Two to four people, or one against the bot.',
   };
 
   function renderHome() {
@@ -239,7 +240,7 @@
   const THEME_COLOR = { home: '#12141d', euchre: '#12261c', draw: '#17102a',
     trivia: '#0d1c24', runner: '#170d1e', battleship: '#08131f', connect4: '#1a0f14',
     codenames: '#0f1411', wavelength: '#1e140e',
-    knowme: '#1d0e1a' };
+    knowme: '#1d0e1a', dots: '#17171a' };
 
   function setTheme(name) {
     document.body.dataset.theme = name;

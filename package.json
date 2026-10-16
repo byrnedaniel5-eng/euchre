@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node server/selftest.js && node server/records-test.js && node server/e2e.js && node server/draw-e2e.js && node server/trivia-e2e.js && node server/runner-e2e.js && node server/battleship-e2e.js && node server/connect4-e2e.js && node server/codenames-e2e.js && node server/wavelength-e2e.js && node server/knowme-e2e.js && node server/leavecheck.js",
+    "test": "node server/selftest.js && node server/records-test.js && node server/e2e.js && node server/draw-e2e.js && node server/trivia-e2e.js && node server/runner-e2e.js && node server/battleship-e2e.js && node server/connect4-e2e.js && node server/codenames-e2e.js && node server/wavelength-e2e.js && node server/knowme-e2e.js && node server/dots-e2e.js && node server/leavecheck.js",
     "test:ui": "node server/uicheck.js",
     "test:draw-ui": "node server/draw-ui.js",
     "test:tags": "node server/tagcheck.js",
