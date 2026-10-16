@@ -373,6 +373,21 @@
   <button id="wr-next" class="primary" hidden></button>
 </section>
 
+<!-- --------------------------------------------------------- yahtzee -->
+<section id="game-yahtzee" class="screen game-screen" hidden>
+  <header class="g-hud">
+    <div class="turn-pill"><span id="yz-round"></span></div>
+    <div id="yz-status" class="g-turn"></div>
+    <button class="icon-btn menu-btn" aria-label="Menu">&#8943;</button>
+  </header>
+  <div id="yz-dice" class="yz-dice"></div>
+  <div class="yz-actions">
+    <button id="yz-roll" class="primary"></button>
+    <button id="yz-score" class="primary score" hidden></button>
+  </div>
+  <div id="yz-sheet" class="yz-sheet"></div>
+</section>
+
 <!-- --------------------------------------------------------- shared -->
 <div id="overlay" class="overlay" hidden>
   <div class="overlay-card">
@@ -438,6 +453,7 @@
 <script src="games/knowme.js"></script>
 <script src="games/dots.js"></script>
 <script src="games/wordle.js"></script>
+<script src="games/yahtzee.js"></script>
 <script>window.__gamesReady && window.__gamesReady();</script>
 </body>
 </html>

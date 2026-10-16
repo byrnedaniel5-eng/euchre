@@ -1973,3 +1973,85 @@ body[data-theme="wordle"] button.primary {
 }
 .wr-key.wide { max-width: 66px; flex: 1.5; font-size: 12px; }
 #wr-next { margin-top: 0; }
+
+/* ================================================================= yahtzee */
+
+/* A green-baize dice table with a cream score pad. */
+body[data-theme="yahtzee"] {
+  --felt-1: #0c1a14;
+  --felt-2: #17402c;
+  --panel: #12281d;
+  --ink: #f0f6f1;
+  --muted: #98b5a3;
+  --gold: #f4c95d;
+  --accent: #e8574b;
+  background: radial-gradient(ellipse at 50% 15%, #1d5236, #0c1a14 72%);
+}
+body[data-theme="yahtzee"] button.primary {
+  background: linear-gradient(180deg, #f06b5f, #c9413a);
+  color: #fff;
+}
+.game-card[data-for="yahtzee"]::before { background: #e8574b; }
+
+#game-yahtzee { gap: 10px; overflow-y: auto; }
+.yz-dice { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; flex: 0 0 auto; padding-top: 12px; }
+.yz-die {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 12%;
+  border-radius: 16%;
+  background: linear-gradient(160deg, #ffffff, #e9e4da);
+  border: none;
+  box-shadow: 0 4px 0 #b9b1a2, 0 8px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s;
+}
+.yz-die.blank { background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12); }
+.yz-die.held { transform: translateY(-10px); box-shadow: 0 0 0 3px var(--gold), 0 4px 0 #b9b1a2; }
+.yz-die em {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -18px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0;
+}
+.yz-die.held em { opacity: 1; }
+.yz-die.tumble { animation: yz-tumble 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both; animation-delay: calc(var(--k) * 0.04s); }
+@keyframes yz-tumble { 0% { transform: rotate(-200deg) scale(0.5); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.pips { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 100%; height: 100%; }
+.pips i { display: block; width: 72%; aspect-ratio: 1; margin: auto; border-radius: 50%; }
+.pips i.on { background: #20232a; }
+
+.yz-actions { display: flex; gap: 8px; margin-top: 10px; }
+.yz-actions .primary { margin-top: 0; flex: 1; width: auto; }
+.yz-actions .primary.score { background: linear-gradient(180deg, #f7d77c, #e3b23c); color: #2a1f00; }
+
+.yz-sheet table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: #faf6ea;
+  color: #2b2a26;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.yz-sheet th, .yz-sheet td { padding: 5px 6px; text-align: center; border-bottom: 1px solid #e4dcc6; }
+.yz-sheet th { font-size: 12px; background: #efe6cd; color: #5c5543; max-width: 70px; overflow: hidden; }
+.yz-sheet th.now { background: #f4c95d; color: #2a1f00; }
+.yz-sheet td.lbl { text-align: left; font-weight: 600; white-space: nowrap; }
+.yz-sheet td.lbl i { font-style: normal; font-weight: 500; font-size: 11px; color: #8a8270; }
+.yz-sheet td.got { font-weight: 800; }
+.yz-sheet td.got.zero { color: #b3aa94; }
+.yz-sheet td.got.fresh { animation: yz-fresh 1.2s ease-out; }
+@keyframes yz-fresh { from { background: #f4c95d; } }
+.yz-sheet td.maybe { color: #9a8f72; font-style: italic; cursor: pointer; }
+.yz-sheet td.maybe.picked { background: #e8574b; color: #fff; font-style: normal; font-weight: 800; }
+.yz-sheet tr.sum td { background: #f3ecd8; font-size: 12px; }
+.yz-sheet tr.total td { font-size: 15px; font-weight: 800; background: #efe6cd; }
+.yz-sheet .prog { color: #8a8270; }
+.yz-actions .primary { white-space: nowrap; font-size: 15px; padding-left: 8px; padding-right: 8px; }

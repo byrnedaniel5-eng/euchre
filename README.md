@@ -29,6 +29,8 @@ The games so far, and a running score between whoever plays them:
   against a bot.
 - **Word Race** — the same hidden five-letter word for everyone, six guesses
   each, all at once. You can watch their colours fill in, never their letters.
+- **Yahtzee** — five dice, three rolls, thirteen boxes, full rules. Two to
+  four, or one against a bot.
 
 ## Looks
 
@@ -49,6 +51,7 @@ each rule is written once against them.
 | Know Me | Late-night conversation: deep plum and warm pink. |
 | Dots & Boxes | Graphite and a yellow pencil, the board on notebook paper. |
 | Word Race | Newsprint at night: near-black with the familiar green and gold. |
+| Yahtzee | A green-baize dice table and a cream score pad. |
 
 The mobile browser chrome colour follows too, and the landing screen carries a
 colour stripe per game so the card you tap matches where you land.
@@ -502,6 +505,25 @@ since the test is no more allowed to see the answer than a phone is.
 
 The guess list comes from the MIT-licensed `word-list` package; see
 `server/games/wordle/LICENSE-words.txt`.
+
+## Yahtzee
+
+The boxed rules in full: 35 for 63 or more in the top half, 100 for every
+extra Yahtzee once the box holds 50, and the **joker rule** — an extra Yahtzee
+must go in its own top box if that is open, otherwise any bottom box at full
+value (a full house is 25 even though five alike is not one), otherwise a top
+box for nothing.
+
+**The server rolls every die**, and everyone sees every roll and which dice
+are being held as they are tapped. On your turn your column of the sheet
+fills with what each open box would score with the dice as they lie; tap one,
+then confirm — a box is filled for good.
+
+The bot knows what each box typically averages over a decent game, and
+scores a box for what it adds over that: three in Ones is fine, ten in Chance
+is a waste. Between rolls it tries all 32 ways of holding the dice and
+simulates the rerolls. Sharp averages about 195 a game and Casual about 170;
+the suite checks both and that the gap holds.
 
 ## The running score
 

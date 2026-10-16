@@ -13,8 +13,9 @@ import wavelength from './games/wavelength/index.js';
 import knowme from './games/knowme/index.js';
 import dots from './games/dots/index.js';
 import wordle from './games/wordle/index.js';
+import yahtzee from './games/yahtzee/index.js';
 
-const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength, knowme, dots, wordle];
+const MODULES = [euchre, draw, trivia, runner, battleship, connect4, codenames, wavelength, knowme, dots, wordle, yahtzee];
 const BY_ID = new Map(MODULES.map((m) => [m.id, m]));
 
 export const games = () => MODULES;
