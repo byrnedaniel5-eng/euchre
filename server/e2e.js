@@ -240,7 +240,10 @@ try {
   dan.autoNext = gf.autoNext = true;
   dan.think();
   gf.think();
-  await waitFor(() => dan.state.phase === 'gameOver', 'game to finish', 120000);
+  // Both phones, not just one: the second state can still be on the wire when
+  // the first arrives, and comparing then is a race rather than a check.
+  await waitFor(() => dan.state.phase === 'gameOver' && gf.state.phase === 'gameOver',
+    'game to finish', 120000);
   const score = dan.state.score;
   assert(Math.max(...score) >= 10, `someone reached ten (${score[0]}-${score[1]})`);
   assert(dan.state.score.join() === gf.state.score.join(), 'both clients agree on the score');
